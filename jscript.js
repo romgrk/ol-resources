@@ -484,3 +484,42 @@ function sqlExecute(query, connectionString) {
   rs.open(query, connectionString, adOpenForwardOnly, adLockReadOnly, adCmdText);
   rs.close();
 }
+
+
+
+/*
+ * String
+ */
+
+
+function rightpad(str, len, ch) {
+  str = str.toString()
+
+  if (!ch && ch !== 0)
+    ch = ' ';
+
+  while (str.length < len) {
+    str = str + ch
+  }
+
+  if (str.length > len)
+    str = str.slice(0, len)
+
+  return str;
+}
+
+function leftpad(str, len, ch) {
+  str = str.toString()
+
+  if (!ch && ch !== 0)
+    ch = ' ';
+
+  while (str.length < len) {
+    str = ch + str
+  }
+
+  if (str.length > len)
+    str = str.slice(0, len)
+
+  return str;
+}
