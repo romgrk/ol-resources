@@ -210,10 +210,20 @@ function fileContains(file, s) {
   return file.Name.indexOf(s) != -1;
 }
 
-function createFolder (name) {
+function createFolder (path) {
   var fs = new ActiveXObject("Scripting.FileSystemObject");
-  if (!fs.FolderExists(name)) {
-    fs.CreateFolder(name);
+  if (!fs.FolderExists(path)) {
+    var current = path;
+    var foldersToCreate = [];
+
+    while (!fs.FolderExists(current)) {
+      foldersToCreate.push(current)
+      current = fs.getParentFolderName(current)
+    }
+
+    while (foldersToCreate.length) {
+      fs.createFolder(foldersToCreate.pop())
+    }
   }
 }
 
@@ -483,4 +493,8 @@ function sqlExecute(query, connectionString) {
   var rs = new ActiveXObject("ADODB.Recordset");
   rs.open(query, connectionString, adOpenForwardOnly, adLockReadOnly, adCmdText);
   rs.close();
+}
+
+function escapeSql(val) {
+  return "'" + val.replace(/'/g, "''") + "'";
 }
