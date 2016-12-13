@@ -26,6 +26,9 @@ function toString(value) {
   function log(msg) { WScript.stdout.WriteLine(toString(msg)); }
   function err(msg) { WScript.stdout.WriteLine(toString(msg)); }
   function exp(string) { return string; }
+  function toString(value) {
+    return ''+value
+  }
 }
 
 
@@ -94,6 +97,47 @@ function filter(array, predicate) {
   return newArray;
 }
 
+function some(array, predicate) {
+  for (var i = 0; i < array.length; i++) {
+    if (predicate(array[i], i, array))
+      return true
+  }
+  return false
+}
+
+function every(array, predicate) {
+  for (var i = 0; i < array.length; i++) {
+    if (!predicate(array[i], i, array))
+      return false
+  }
+  return true
+}
+
+
+
+/*
+ * Object
+ */
+
+function assign(target) {
+  'use strict';
+  var args = Array.prototype.slice.call(arguments, 1)
+  for (var i = 0; i < args.length; i++) {
+    var source = args[i]
+    for (var key in source) {
+      target[key] = source[key]
+    }
+  }
+  return target
+}
+
+function keys(object) {
+  var keys = []
+  for (var key in object)
+    keys.push(key)
+  return keys
+}
+
 
 
 /*
@@ -124,19 +168,19 @@ function readFile(path){
   return res;
 }
 
+function writeFile(path, content){
+  var fs = new ActiveXObject('Scripting.FileSystemObject');
+  var file = fs.OpenTextFile(path, 2, true);
+  file.Write(content);
+  file.Close();
+}
+
 function readBinaryFile(path) {
   var binStream = new ActiveXObject("ADODB.Stream")
   binStream.Type = 1; //adTypeBinary
   binStream.open()
   binStream.loadFromFile(path)
   return binStream.read();
-}
-
-function writeFile(path, content){
-  var fs = new ActiveXObject('Scripting.FileSystemObject');
-  var file = fs.OpenTextFile(path, 2, true);
-  file.Write(content);
-  file.Close();
 }
 
 function writeBinaryFile(path, content) {
@@ -523,3 +567,8 @@ function leftpad(str, len, ch) {
 
   return str;
 }
+
+function trim(string) {
+  return string.replace(/^\s+|\s+$/g, '')
+}
+
