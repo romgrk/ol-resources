@@ -254,10 +254,20 @@ function fileContains(file, s) {
   return file.Name.indexOf(s) != -1;
 }
 
-function createFolder (name) {
+function createFolder (path) {
   var fs = new ActiveXObject("Scripting.FileSystemObject");
-  if (!fs.FolderExists(name)) {
-    fs.CreateFolder(name);
+  if (!fs.FolderExists(path)) {
+    var current = path;
+    var foldersToCreate = [];
+
+    while (!fs.FolderExists(current)) {
+      foldersToCreate.push(current)
+      current = fs.getParentFolderName(current)
+    }
+
+    while (foldersToCreate.length) {
+      fs.createFolder(foldersToCreate.pop())
+    }
   }
 }
 
@@ -501,23 +511,23 @@ function sqlQuery(query, connectionString) {
   var rs = new ActiveXObject("ADODB.Recordset");
   rs.open(query, connectionString, adOpenDynamic, adLockOptimistic);
 
-  var result = [];
+  var res = [];
   while (!rs.eof) {
     var record = {};
 
     for (var i = 0; i < rs.fields.count; ++i) {
-      var key = rs.fields(i).name;
+      var key   = rs.fields(i).name;
       var value = rs.fields(i).value;
       record[key] = value;
     }
 
-    result.push(record);
+    res.push(record);
     rs.MoveNext();
   }
 
   rs.close();
 
-  return result;
+  return res;
 }
 
 function sqlExecute(query, connectionString) {
@@ -526,7 +536,10 @@ function sqlExecute(query, connectionString) {
   var adCmdText = 1;
   var rs = new ActiveXObject("ADODB.Recordset");
   rs.open(query, connectionString, adOpenForwardOnly, adLockReadOnly, adCmdText);
-  rs.close();
+}
+
+function escapeSql(val) {
+  return "'" + val.replace(/'/g, "''") + "'";
 }
 
 
