@@ -34,37 +34,6 @@ function toString(value) {
 
 
 /*
- * Logging
- */
-
-
-function debug(msg, indent) {
-  var c = function (n) {
-    return function (s) {
-      return '\x1b[' + n + 'm' + s + '\x1b[0m';
-    }
-  }
-
-  var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94');
-
-  indent = indent || '';
-  if (typeof msg == 'string') {
-    log(green('"' + msg + '"'));
-    return;
-  }
-  for (var i in msg) {
-    if (typeof msg[i] == 'object') {
-      log(indent + yellow(i) + ':');
-      debug(msg[i], indent + '  ')
-    } else {
-      log(indent + yellow(i) + ':' + msg[i]);
-    }
-  }
-}
-
-
-
-/*
  * Array
  */
 
@@ -76,7 +45,7 @@ function forEach(array, callback) {
 function map(array, callback) {
   var newArray = []
   for (var i = 0; i < array.length; i++)
-    newArray[i] = callback(array[i])
+    newArray[i] = callback(array[i], i, array)
   return newArray;
 }
 
@@ -91,7 +60,7 @@ function reduce(array, callback, accumulator) {
 function filter(array, predicate) {
   var newArray = []
   for (var i =0; i < array.length; i++) {
-    if (predicate(array[i]))
+    if (predicate(array[i], i, array))
       newArray.push(array[i])
   }
   return newArray;
@@ -111,6 +80,69 @@ function every(array, predicate) {
       return false
   }
   return true
+}
+
+function contains(array, value) {
+  for (var i = 0; i < array.length; i++) {
+    if (array[i] === value)
+      return true
+  }
+  return false
+}
+
+function last(array) {
+  return array[array.length - 1]
+}
+
+function flatten(array) {
+  return reduce(array, function(acc, cur){ return acc.concat(cur); }, [])
+}
+
+function zip(a, b) {
+  return map(a, function(e, i) { return [e, b[i]] })
+}
+
+function append(array, other) {
+  Array.prototype.push.apply(array, other)
+  return array
+}
+
+function prepend(array, other) {
+  Array.prototype.unshift.apply(array, other)
+  return array
+}
+
+function extendArray() {
+  Array.from = function(array) {
+    try {
+      return Array.prototype.slice.call(array, 0)
+    } catch(e) {
+      return map(array, function(v) { return v })
+    }
+  }
+
+  var functions = {
+    map: map,
+    reduce: reduce,
+    filter: filter,
+    forEach: forEach,
+    some: some,
+    every: every,
+    flatten: flatten,
+    contains: contains,
+    append: append,
+    prepend: prepend,
+    last: last
+  }
+  for (var n in functions) {
+    (function(name, fn) {
+      Array.prototype[name] = function() {
+        var args = Array.prototype.slice.call(arguments, 0)
+        args.unshift(this)
+        return fn.apply(this, args)
+      }
+    }(n, functions[n]))
+  }
 }
 
 
@@ -136,6 +168,20 @@ function keys(object) {
   for (var key in object)
     keys.push(key)
   return keys
+}
+
+function values(object) {
+  var values = []
+  for (var key in object)
+    values.push(object[key])
+  return values
+}
+
+function entries(object) {
+  var entries = []
+  for (var key in object)
+    entries.push([key, object[key]])
+  return entries
 }
 
 
@@ -438,7 +484,7 @@ function httpPOST(url, data) {
 
 /** Sends an email.
  * Usage:
- 
+
   var message = {
     server:   'smtp.office365.com',
     port:     25,
@@ -584,4 +630,36 @@ function leftpad(str, len, ch) {
 function trim(string) {
   return string.replace(/^\s+|\s+$/g, '')
 }
+
+
+
+/*
+ * Logging
+ */
+
+
+function debug(msg, indent) {
+  var c = function (n) {
+    return function (s) {
+      return '\x1b[' + n + 'm' + s + '\x1b[0m';
+    }
+  }
+
+  var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94');
+
+  indent = indent || '';
+  if (typeof msg == 'string') {
+    log(green('"' + msg + '"'));
+    return;
+  }
+  for (var i in msg) {
+    if (typeof msg[i] == 'object') {
+      log(indent + yellow(i) + ':');
+      debug(msg[i], indent + '  ')
+    } else {
+      log(indent + yellow(i) + ':' + msg[i]);
+    }
+  }
+}
+
 
