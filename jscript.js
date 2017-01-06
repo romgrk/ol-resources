@@ -527,12 +527,17 @@ function sendEmail(options) {
   message.Subject       = options.subject;
   message.HTMLBody      = options.body;
 
+  if (options.priority == 2) {
+    message.Fields.Item('urn:schemas:mailheader:X-MSMail-Priority') = 'High'
+    message.Fields.Item('urn:schemas:mailheader:X-Priority') = 2
+    message.Fields.Item('urn:schemas:httpmail:importance') = 2
+  }
+
   if (options.headers) {
     for (var key in options.headers) {
       var value = options.headers[key];
       message.Fields("urn:schemas:mailheader:" + key) = value;
     }
-    message.Fields.Update();
   }
 
   if (options.attachments) {
@@ -542,6 +547,7 @@ function sendEmail(options) {
     }
   }
 
+  message.Fields.Update();
   message.Send();
 }
 
