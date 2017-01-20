@@ -57,12 +57,17 @@ function readRows(sheet) {
   return rows;
 }
 
+function readExcelRows(path) {
+  var x = readExcelFile(path);
+  var sheet = x.activeSheet;
+  var rows = readRows(sheet);
+  x.quit();
+  return rows;
+}
 
-var x = readExcelFile('c:/users/gregoirr/tmp/file.xlsx');
-var sheet = x.activeSheet;
-var rows = readRows(sheet);
 
-
+var rows = readExcelRows('c:/users/gregoirr/tmp/file.xlsx')
+debug(rows)
 
 
 
