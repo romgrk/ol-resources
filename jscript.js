@@ -13,7 +13,7 @@ function set(name, value) { Watch.setVariable(name, value); }
 function log(msg) { Watch.log(toString(msg), 2); }
 function err(msg) { Watch.log(toString(msg), 1); }
 function exp(string) { return Watch.expandString(string); }
-function xml(string) { return Watch.expandString("xmlget('" + string + "',Value,KeepCase,No Trim)"); }
+function xml(string) { return Watch.expandString("xmlget('/request[1]/values[1]/" + string + "[1]',Value,KeepCase,No Trim)"); }
 function toString(value) {
   if (typeof value == 'string') return value;
   if (typeof value == 'object') return JSON.stringify(value)
@@ -271,6 +271,11 @@ function createFolder (path) {
   }
 }
 
+
+function join() {
+  'use strict';
+  return Array.prototype.slice.call(arguments, 0).join('\\')
+}
 
 
 /*
