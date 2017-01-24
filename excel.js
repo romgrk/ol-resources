@@ -24,6 +24,12 @@ try {
 
 
 
+var rows = readExcelRows('c:/users/gregoirr/tmp/file.xlsx')
+var records = rowsToObjects(rows)
+
+debug(rows)
+
+debug(records)
 
 
 function readExcelFile(path) {
@@ -35,6 +41,7 @@ function readExcelFile(path) {
 function readRows(sheet) {
   var row = 1;
   var rows = [];
+  var length;
   while (true) {
     var col = 1;
 
@@ -42,14 +49,17 @@ function readRows(sheet) {
       break;
 
     var currentRow = [];
-    while (true) {
+    while (length != undefined ? col <= length : true) {
       var currentValue = sheet.cells(row,col).value;
-      if (currentValue == undefined)
+      if (length == undefined && currentValue == undefined)
         break;
 
       currentRow.push(currentValue)
       col++;
     }
+
+    if (length == undefined)
+      length = currentRow.length
 
     rows.push(currentRow)
     row++;
@@ -65,9 +75,21 @@ function readExcelRows(path) {
   return rows;
 }
 
-
-var rows = readExcelRows('c:/users/gregoirr/tmp/file.xlsx')
-debug(rows)
+function rowsToObjects(rows) {
+  var keys = rows[0]
+  var result = []
+  for (var i = 1; i < rows.length; i++) {
+    var row = rows[i]
+    var object = {}
+    for (var j = 0; j < row.length; j++) {
+      var key = keys[j]
+      var value = row[j]
+      object[key] = value
+    }
+    result.push(object)
+  }
+  return result
+}
 
 
 
@@ -76,13 +98,11 @@ debug(rows)
  */
 
 
-
 function toString(value) {
   if (typeof value == 'string') return value;
   //if (typeof value == 'object') return JSON.stringify(value)
   return ''+value
 }
-
 
 function debug(msg, indent) {
   var c = function (n) {
@@ -119,5 +139,3 @@ function debug(msg, indent) {
     }
   }
 }
-
-
