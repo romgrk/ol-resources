@@ -200,6 +200,22 @@ function binaryToString(binary) {
   return rs("mBinary").value;
 }
 
+function stringToBinary(text, charSet) {
+  var stream = new ActiveXObject('ADODB.Stream')
+
+  stream.type = 2 // adTypeText
+  stream.charSet = charSet || 'utf-8'
+
+  stream.open()
+  stream.writeText(text)
+
+  stream.position = 0
+  stream.type = 1 // adTypeBinary
+  stream.position = 0
+
+  return stream.read()
+}
+
 
 
 /*
