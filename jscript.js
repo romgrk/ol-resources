@@ -675,6 +675,14 @@ function debug(msg, indent) {
   var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94');
 
   indent = indent || '';
+  if (typeof msg == 'number') {
+    log(yellow(msg))
+    return
+  }
+  if (typeof msg == 'boolean') {
+    log(yellow(msg))
+    return
+  }
   if (typeof msg == 'string') {
     log(green('"' + msg + '"'));
     return;
