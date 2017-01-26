@@ -203,7 +203,7 @@ function binaryToString(binary) {
 function stringToBinary(text, charSet) {
   var stream = new ActiveXObject('ADODB.Stream')
   stream.type = 2 // adTypeText
-  stream.charSet = charSet || 'utf-8'
+  stream.charSet = charSet || 'us-ascii'
   stream.open()
   stream.writeText(text)
   stream.position = 0
