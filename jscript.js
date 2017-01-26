@@ -413,14 +413,14 @@ function writeDecodedBase64(text, to) {
  */
 /*
 
-  var meta   = loadMeta();
-  var group  = meta.job().group(0);
-  var doc    = group.document(0);
+  var meta   = loadMeta()
+  var group  = metalistToJS(meta.job().group(0))
+  var docs   = map(group, metanodeToJS)
 
-  var object = metanodeToJS(doc);
+  // Metadata available as field of docs, e.g.
+  // docs[0].CustomerID
 
-  log(object)
-  log(metalistToJS(group))
+  log(docs)
 
   saveMetaAsXML(meta, 'C:/Users/gregoirr/Desktop/meta.xml')
 
@@ -508,7 +508,7 @@ function httpPOST(url, data) {
 
   var message = {
     server:   'smtp.office365.com',
-    port:     25,
+    port:     25, // For use with office365, dont include the port
     username: 'docrequest@lordco.com',
     password: 'secret',
     usessl:   true,
