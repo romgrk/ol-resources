@@ -5,29 +5,13 @@
  * Distributed under terms of the MIT license.
  */
 
-try {
-  Watch;
-  function get(name) { return Watch.getVariable(name); }
-  function set(name, value) { Watch.setVariable(name, value); }
-  function log(msg) { Watch.log(toString(msg), 2); }
-  function err(msg) { Watch.log(toString(msg), 1); }
-  function exp(string) { return Watch.expandString(string); }
-  function xml(string) { return Watch.expandString("xmlget('" + string + "',Value,KeepCase,No Trim)"); }
-} catch (e) {
-  var global = {};
-  function get(name) { return global[name]; }
-  function set(name, value) { global[name] = value; }
-  function log(msg) { WScript.stdout.WriteLine(toString(msg)); }
-  function err(msg) { WScript.stdout.WriteLine(toString(msg)); }
-  function exp(string) { return string; }
-}
 
 
-
-var rows = readExcelRows('c:/users/gregoirr/tmp/file.xlsx')
-var records = rowsToObjects(rows)
+var rows    = readExcelRows('c:/users/gregoirr/tmp/file.xlsx')
 
 debug(rows)
+
+var records = rowsToObjects(rows)
 
 debug(records)
 
@@ -68,11 +52,11 @@ function readRows(sheet) {
 }
 
 function readExcelRows(path) {
-  var x = readExcelFile(path);
-  var sheet = x.activeSheet;
-  var rows = readRows(sheet);
-  x.quit();
-  return rows;
+  var x = readExcelFile(path)
+  var sheet = x.activeSheet
+  var rows = readRows(sheet)
+  x.quit()
+  return rows
 }
 
 function rowsToObjects(rows) {
@@ -98,9 +82,10 @@ function rowsToObjects(rows) {
  */
 
 
+function log(msg) { WScript.stdout.WriteLine(toString(msg)); }
+function err(msg) { WScript.stdout.WriteLine(toString(msg)); }
 function toString(value) {
   if (typeof value == 'string') return value;
-  //if (typeof value == 'object') return JSON.stringify(value)
   return ''+value
 }
 
