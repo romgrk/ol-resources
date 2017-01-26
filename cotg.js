@@ -3,18 +3,18 @@
  */
 
 var options = {
-  storeID:          'oltest'
-, password:         'qpalzm'
-, title:            'File'
-, file:             readFile('c:/users/gregoirr/tmp/index.html')
-, author:           'romgrk'
-, description:      'description'
-, category:         'none'
-, recipient:        'gregoirer@ca.objectiflune.com'
-, expiration:       '2017-12-01'
-, autodownload:     true
-, bookshelfTime:    0
-, beta:             false
+    storeID:          'oltest'
+  , password:         'qpalzm'
+  , title:            'File'
+  , file:             readFile('c:/users/gregoirr/tmp/index.html')
+  , author:           'romgrk'
+  , description:      'description'
+  , category:         'none'
+  , recipient:        'gregoirer@ca.objectiflune.com'
+  , expiration:       '2017-12-01'
+  , autodownload:     true
+  , bookshelfTime:    0
+  , beta:             false
 }
 
 var res = send_document(options)
@@ -40,7 +40,7 @@ debug(res)
  */
 function send_document(options) {
   //var url = 'http://localhost:8080/submit'
-  var url  = options.beta ?  'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
+  var url = options.beta ? 'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
 
   var data = {
       StoreID:           options.storeID
@@ -95,9 +95,9 @@ function encodeMultipartFormData(boundary, data) {
   for (var key in data) {
     var field = data[key]
     if (typeof field === 'string')
-      parts.push(getContentDisposition(key, field))
+      parts.push(encodeMultipartPart(key, field))
     else
-      parts.push(getContentDisposition(key, field.value, field.type))
+      parts.push(encodeMultipartPart(key, field.value, field.type))
   }
 
   return (
@@ -108,10 +108,10 @@ function encodeMultipartFormData(boundary, data) {
 }
 
 // Encode part of a multipart form
-function getContentDisposition(name, value, filename, type) {
+function encodeMultipartPart(name, value, type) {
   return (
       'Content-Disposition: form-data; name="' + name + '"'
-          + (filename ? '; filename="' + filename +'"' : '') + '\r\n'
+          + (type === undefined ? '' : '; filename="' + name +'.html"') + '\r\n'
     + (type === undefined ? '' : 'Content-Type: ' + type + '\r\n')
     + '\r\n'
     + value + '\r\n'
