@@ -5,19 +5,19 @@
 
 var api = new RestAPI('ol-admin', 'secret')
 
-var contentSets  = api.contentsets.list()
+var contentSets  = api.contentsets.getAllContentSetEntities()
 log(contentSets)
 
-var contentSet   = api.contentsets.get(contentSets[0])
+var contentSet   = api.contentsets.getContentItemsforContentSet(contentSets[0])
 log(contentSet)
 
-var pages        = api.contentsets.pages(contentSets[0])
+var pages        = api.contentsets.getPageDetailsforContentSet(contentSets[0])
 log(pages)
 
-var dataSets     = api.datasets.list()
+var dataSets     = api.datasets.getAllDataSetEntities()
 log(dataSets)
 
-var dataRecords  = api.datasets.get(dataSets[0])
+var dataRecords  = api.datasets.getDataRecordsforDataSet(dataSets[0])
 log(dataRecords)
 
 var ack          = api.files.handshake()
@@ -26,6 +26,8 @@ log(ack)
 var res          = api.files.uploadDataFile('index.html', false, readFile('c:/users/gregoirr/tmp/index.html'))
 log(res)
 
+var allInOne     = api.print.processAllInOne({ /* config */ })
+log(allInOne)
 
 
 function RestAPI(username, password) {
