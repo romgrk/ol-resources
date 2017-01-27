@@ -3,31 +3,70 @@
  */
 
 
-var api = new RestAPI('ol-admin', 'secret')
 
-var contentSets  = api.contentsets.getAllContentSetEntities()
-log(contentSets)
+function setupWorkflowTest() {
+  var paths = {
+      dataFile:   'c:/users/gregoirr/dev/docs/quote.json'
+    , dataMapper: 'c:/users/gregoirr/dev/docs/quote_json.OL-datamapper'
+  }
 
-var contentSet   = api.contentsets.getContentItemsforContentSet(contentSets[0])
-log(contentSet)
+  var api = new RestAPI('ol-admin', 'secret')
 
-var pages        = api.contentsets.getPageDetailsforContentSet(contentSets[0])
-log(pages)
+  //var contentSets  = api.contentsets.getAllContentSetEntities()
+  //log(contentSets)
 
-var dataSets     = api.datasets.getAllDataSetEntities()
-log(dataSets)
+  //var contentSet   = api.contentsets.getContentItemsforContentSet(contentSets[0])
+  //log(contentSet)
 
-var dataRecords  = api.datasets.getDataRecordsforDataSet(dataSets[0])
-log(dataRecords)
+  //var pages        = api.contentsets.getPageDetailsforContentSet(contentSets[0])
+  //log(pages)
 
-var ack          = api.files.handshake()
-log(ack)
+  //var dataSets     = api.datasets.getAllDataSetEntities()
+  //log(dataSets)
 
-var res          = api.files.uploadDataFile('index.html', false, readFile('c:/users/gregoirr/tmp/index.html'))
-log(res)
+  //var dataRecords  = api.datasets.getDataRecordsforDataSet(dataSets[0])
+  //log(dataRecords)
 
-var allInOne     = api.print.processAllInOne({ /* config */ })
-log(allInOne)
+  //var ack          = api.files.handshake()
+  //log(ack)
+
+  //var fileId       = api.files.uploadDataFile('file', false, readFile(paths.dataFile))
+  //log(fileId)
+
+  //var configId     = api.files.uploadDataMapping('dm', false, readFile(paths.dataMapper))
+  //log(configId)
+
+  //var operationId  = api.datamining.processDataMapping(configId, fileId)
+  //log(operationId)
+
+  //for (var i = 0; i < 5; i++) {
+  //var progress   = api.datamining.getProgressOfOperation(operationId)
+  //log(progress)
+  //sleep(100)
+  //}
+
+  //var res          = api.datamining.getResultOfOperation(operationId)
+  //log(res)
+
+  //var allInOne     = api.print.processAllInOne({ [> config <] })
+  //log(allInOne)
+}
+
+function setupBrowserTest() {
+  var api = new RestAPI('ol-admin', 'secret')
+
+  document.body.innerHTML = '<form><input type="file"/><input type="submit" value="Send"/></form><span></span>'
+
+  var form = document.querySelector('form')
+
+  form.addEventListener('submit', function(ev) {
+    ev.preventDefault()
+
+    var fileId = api.files.uploadDataFile('file', false, document.querySelector('[type=file]').files[0])
+
+    document.querySelector('span').innerText = fileId
+  })
+}
 
 
 function RestAPI(username, password) {
@@ -36,7 +75,7 @@ function RestAPI(username, password) {
   var token = fetch({
     method:  'POST',
     url:     base + '/rest/serverengine/authentication/login',
-    headers: { Authorization: 'Basic ' + btoa(username + ':' + password) }
+    headers: { Authorization: 'Basic ' + base64(username + ':' + password) }
   })
 
   function request(url, method, data, options) {
@@ -44,9 +83,11 @@ function RestAPI(username, password) {
     return fetch(assign({
       method:  method,
       url:     base + '/rest/serverengine' + url,
-      data:    data,
-      json:    true
-    }, options, { headers: assign({ auth_token: token }, options.headers) }))
+      data:    data
+    }, options, { headers: assign(
+      { auth_token: token, 'Content-Type': 'application/json' },
+      options.headers
+    )}))
   }
 
   function POST(url, data, options) { return request(url, 'POST', data, options) }
@@ -247,7 +288,7 @@ function RestAPI(username, password) {
 
     serviceVersion: function () {
       return GET('/workflow/contentcreation/version')
-    },
+    }
   }
 
   this.datamining = {
@@ -310,6 +351,32 @@ function RestAPI(username, password) {
     }
   }
 
+  this.email = {
+    serviceHandshake: function () {
+      return GET('/workflow/contentcreation/email')
+    },
+
+    processContentCreation: function (templateId, identifiers) {
+      return POST('/workflow/contentcreation/email/' + templateId, identifiers)
+    },
+
+    getProgressofOperation: function (operationId) {
+      return GET('/workflow/contentcreation/email/getProgress/' + operationId)
+    },
+
+    getResultofOperation: function (operationId) {
+      return POST('/workflow/contentcreation/email/getResult/' + operationId)
+    },
+
+    cancelanOperation: function (operationId) {
+      return POST('/workflow/contentcreation/email/cancel/' + operationId)
+    },
+
+    serviceVersion: function () {
+      return GET('/workflow/contentcreation/email/version')
+    }
+  }
+
   this.jobcreation = {
     serviceHandshake: function () {
       return GET('/workflow/jobcreation')
@@ -341,7 +408,7 @@ function RestAPI(username, password) {
 
     serviceVersion: function () {
       return GET('/workflow/jobcreation/version')
-    },
+    }
   }
 
   this.jobs = {
@@ -367,16 +434,16 @@ function RestAPI(username, password) {
 
     serviceVersion: function () {
       return GET('/entity/jobs/version')
-    },
+    }
   }
-  
+
   this.jobsets = {
     getAllJobSetEntities: function () {
       return GET('/entity/jobsets')
     },
 
     getJobsforJobSet: function (jobSetId) {
-      return GET('/entity/jobsets/' + jobSetId + '')
+      return GET('/entity/jobsets/' + jobSetId)
     },
 
     deleteJobSetEntity: function (jobSetId) {
@@ -481,10 +548,16 @@ function assign(target) {
 
 // Make an HTTP request
 function fetch(options) {
-  var xhr = new ActiveXObject('MSXML2.ServerXMLHTTP')
+  var xhr
+  try {
+    xhr = new ActiveXObject('MSXML2.ServerXMLHTTP')
+  } catch(e) {
+    try { xhr = new XMLHttpRequest() } catch(e) { }
+  }
 
   var url    = options.url
   var method = options.method || 'GET'
+  var isJSON = false
 
   if (options.data && method === 'GET')
     url += '?' + queryString(options.data)
@@ -496,13 +569,17 @@ function fetch(options) {
   if (options.headers) {
     for (var name in options.headers) {
       var value = options.headers[name]
+
       log({name:name,value:value})
+
+      if (name === 'Content-Type' && value === 'application/json')
+        isJSON = true
+
       xhr.setRequestHeader(name, value)
     }
   }
 
-  if (typeof(options.data) == 'object' && method === 'POST' && options.json) {
-    xhr.setRequestHeader('Content-Type', 'application/json')
+  if (isJSON && method === 'POST') {
     xhr.send(JSON.stringify(options.data))
   }
   else if (options.data && method === 'POST') {
@@ -512,17 +589,23 @@ function fetch(options) {
     xhr.send()
   }
 
-  if (xhr.status != 200)
-    throw new Error('XMLHTTP Error: ' + xhr.status + ' ' + xhr.statusText + ': ' + xhr.responseText)
+  var operationId = xhr.getResponseHeader('operationId')
+
+  if (xhr.status >= 300)
+    return { error: true, status: xhr.status, text: xhr.statusText, response: xhr.responseText }
 
   if (xhr.getResponseHeader('Content-Type') === 'application/json')
     return JSON.parse(xhr.responseText)
+
+  if (xhr.responseText === '' && operationId)
+    return operationId
 
   return xhr.responseText
 }
 
 // Return base64 encoded text
-function btoa(binary) {
+function base64(binary) {
+  try { return window.btoa(binary) } catch(err) {}
   var xml = new ActiveXObject("MSXml2.DOMDocument")
   var element = xml.createElement("Base64Data")
   element.dataType = "bin.base64"
@@ -561,7 +644,11 @@ function readFile(path){
   return res;
 }
 
-
+// Sleep for @ms milliseconds
+function sleep(ms) {
+  var start = +new Date
+  while (+new Date - start < ms);
+}
 
 
 
@@ -571,8 +658,8 @@ function readFile(path){
 
 function get(name) { return Watch.getVariable(name); }
 function set(name, value) { Watch.setVariable(name, value); }
-function log(msg) { try { Watch.log(toString(msg), 2); } catch (e) { WScript.stdout.WriteLine(toString(msg)) } }
-function err(msg) { try { Watch.log(toString(msg), 1); } catch (e) { WScript.stdout.WriteLine(toString(msg)) } }
+function log(msg) { try { Watch.log(toString(msg), 2); } catch (e) { try { WScript.stdout.WriteLine(toString(msg)) } catch (e) { console.log(msg) } } }
+function err(msg) { try { Watch.log(toString(msg), 1); } catch (e) { try { WScript.stdout.WriteLine(toString(msg)) } catch (e) { console.log(msg) } } }
 function exp(string) { return Watch.expandString(string); }
 function xml(string) { return Watch.expandString("xmlget('/request[1]/values[1]/" + string + "[1]',Value,KeepCase,No Trim)"); }
 function toString(value) {
@@ -694,7 +781,4 @@ function extendArray() {
     }(n, functions[n]))
   }
 }
-
-
-
 
