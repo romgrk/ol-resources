@@ -202,17 +202,13 @@ function binaryToString(binary) {
 
 function stringToBinary(text, charSet) {
   var stream = new ActiveXObject('ADODB.Stream')
-
   stream.type = 2 // adTypeText
-  stream.charSet = charSet || 'utf-8'
-
+  stream.charSet = charSet || 'us-ascii'
   stream.open()
   stream.writeText(text)
-
   stream.position = 0
   stream.type = 1 // adTypeBinary
   stream.position = 0
-
   return stream.read()
 }
 
@@ -487,6 +483,42 @@ function saveMetaAsXML(meta, path) {
 /*
  * Network
  */
+
+// Make an HTTP request
+function fetch(options) {
+  var xhr = new ActiveXObject("Microsoft.XMLHTTP")
+
+  var url    = options.url
+  var method = options.method || 'GET'
+
+  if (options.data && method === 'GET')
+    url += '?' + queryString(options.data)
+
+  xhr.open(method, url, false)
+
+  if (options.headers) {
+    for (var name in options.headers) {
+      var value = options.headers[name]
+      xhr.setRequestHeader(name, value)
+    }
+  }
+
+  if (options.json)
+    xhr.setRequestHeader('Content-Type', 'application/json')
+
+  if (options.data && method === 'POST')
+    xhr.send(queryString(options.data))
+  else
+    xhr.send()
+
+  if (xhr.status != 200)
+    throw new Error('XMLHTTP Error: ' + xhr.status + ' ' + xhr.responseStatus)
+
+  if (options.json)
+    return JSON.parse(xhr.responseText)
+
+  return xhr.responseText
+}
 
 function httpGET(url, data) {
   var http = new ActiveXObject("WinHttp.WinHttpRequest.5.1");
