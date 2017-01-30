@@ -478,6 +478,13 @@ function saveMetaAsXML(meta, path) {
   meta.Export(path, 0); // efXml21 = 0
 }
 
+function getMetaDocuments() {
+  var list = metalistToJS(loadMeta().job().group(0))
+  for (var i = 0; i < list.length; i++)
+    list[i] = metanodeToJS(list[i])
+  return list
+}
+
 
 
 /*
