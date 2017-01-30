@@ -485,39 +485,64 @@ function saveMetaAsXML(meta, path) {
  */
 
 // Make an HTTP request
-function fetch(options) {
-  var xhr = new ActiveXObject("Microsoft.XMLHTTP")
+function fetch(options, callback) {
+  var xhr = new ActiveXObject('MSXML2.ServerXMLHTTP')
 
-  var url    = options.url
-  var method = options.method || 'GET'
+  var url     = options.url
+  var method  = options.method || 'GET'
+  var isAsync = options.async || callback != undefined || false
+  var isJSON  = false
 
   if (options.data && method === 'GET')
     url += '?' + queryString(options.data)
 
-  xhr.open(method, url, false)
+  xhr.open(method, url, isAsync)
+
+  err(method + ' ' + url)
 
   if (options.headers) {
     for (var name in options.headers) {
       var value = options.headers[name]
+      if (name === 'Content-Type' && value === 'application/json')
+        isJSON = true
       xhr.setRequestHeader(name, value)
     }
   }
 
-  if (options.json)
-    xhr.setRequestHeader('Content-Type', 'application/json')
+  function send() {
+    if (isJSON && method === 'POST' && typeof options.data == 'object')
+      xhr.send(JSON.stringify(options.data))
+    else if (options.data && method === 'POST')
+      xhr.send(options.data)
+    else
+      xhr.send()
+  }
 
-  if (options.data && method === 'POST')
-    xhr.send(queryString(options.data))
-  else
-    xhr.send()
+  function getResult() {
+    if (xhr.status >= 300)
+      return { error: true, status: xhr.status, text: xhr.statusText, response: xhr.responseText }
+    if (xhr.getResponseHeader('Content-Type') === 'application/json')
+      return JSON.parse(xhr.responseText)
+    return xhr.responseText
+  }
 
-  if (xhr.status != 200)
-    throw new Error('XMLHTTP Error: ' + xhr.status + ' ' + xhr.responseStatus)
+  if (isAsync) {
+    xhr.onload  = function () { callback(getResult()) }
+    xhr.onerror = function () { callback(getResult()) }
+    send()
+  } else {
+    send()
+    return getResult()
+  }
+}
 
-  if (options.json)
-    return JSON.parse(xhr.responseText)
-
-  return xhr.responseText
+// Encode as application/x-www-form-urlencoded (see HTML specs)
+function queryString(params) {
+  var parts = []
+  for (var key in params) {
+    parts.push(key + '=' + encodeURIComponent(params[key]))
+  }
+  return parts.join('&')
 }
 
 function httpGET(url, data) {
