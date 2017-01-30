@@ -51,17 +51,10 @@ function setupWorkflowTest() {
   log(outputId)
 
   var config = {
-    datamining: {
-      config: dmId,
-      identifier: fileId
-    },    contentcreation: {
-      config: templateId
-    },    jobcreation: {
-      config: jobId
-    },    outputcreation: {
-      config: outputId,
-      createOnly: false
-    }
+    datamining:      { config: dmId, identifier: fileId },
+    contentcreation: { config: templateId },
+    jobcreation:     { config: jobId },
+    outputcreation:  { config: outputId, createOnly: false }
   }
 
   var operationId  = api.print.processAllInOne(config)
@@ -69,7 +62,7 @@ function setupWorkflowTest() {
 
   var progress
   while (progress !== 'done') {
-    var progress   = api.print.getProgressOfOperation(operationId)
+    progress       = api.print.getProgressOfOperation(operationId)
     log(progress)
     sleep(100)
   }
