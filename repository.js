@@ -184,7 +184,7 @@ function getRepository() {
 
   Group.prototype.update = function(keySet) {
     var id = keySet.ID;
-    for (var i in this._keys) {
+    for (var i = 0; i < this._keys.length; i++) {
       var key   = this._keys[i]
       var value = keySet[key]
       repo.SetValueByID(this.name, key, value, id)
