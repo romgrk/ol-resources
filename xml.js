@@ -27,8 +27,10 @@ function createDOM() {
 
 function createElement(tagName, value) {
   var element = DOM.createElement(tagName)
-  if (value != undefined)
+  if (value != undefined && typeof value !== 'object')
     element.text = ''+value
+  if (value != undefined && value.constructor == Array)
+    appendChildren(element, value)
   return element
 }
 
