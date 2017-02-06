@@ -7,19 +7,28 @@
 
 
 
-var rows    = readExcelRows('c:/users/gregoirr/tmp/file.xlsx')
+var x      = readExcelFile('c:/users/gregoirr/downloads/Formulaires_Planet_press1.xlsx')
+var sheets = readExcelSheets(x)
 
-debug(rows)
+for (var i = 0; i < sheets.length; i++)
+  debug(readRows(sheets[i]))
 
-var records = rowsToObjects(rows)
+//var records = rowsToObjects(rows)
 
-debug(records)
+//debug(records)
 
 
 function readExcelFile(path) {
   var xls = new ActiveXObject('Excel.Application');
   xls.workbooks.open(path);
   return xls;
+}
+
+function readExcelSheets(x) {
+  var sheets = []
+  for (var n = 0; n < x.sheets.count; n++)
+    sheets.push(x.sheets.item(n + 1))
+  return sheets
 }
 
 function readRows(sheet) {
@@ -123,4 +132,38 @@ function debug(msg, indent) {
       }
     }
   }
+}
+
+
+/*
+ * Array
+ */
+
+function forEach(array, callback) {
+  for (var i = 0; i < array.length; i++)
+    callback(array[i], i, array);
+}
+
+function map(array, callback) {
+  var newArray = []
+  for (var i = 0; i < array.length; i++)
+    newArray[i] = callback(array[i], i, array)
+  return newArray;
+}
+
+function reduce(array, callback, accumulator) {
+  var i       = accumulator != undefined ? 0 : 1
+  accumulator = accumulator != undefined ? accumulator : array[0]
+  for (; i < array.length; i++)
+    accumulator = callback(accumulator, array[i])
+  return accumulator;
+}
+
+function filter(array, predicate) {
+  var newArray = []
+  for (var i =0; i < array.length; i++) {
+    if (predicate(array[i], i, array))
+      newArray.push(array[i])
+  }
+  return newArray;
 }
