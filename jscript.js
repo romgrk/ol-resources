@@ -396,10 +396,10 @@ function writeDecodedBase64(text, to) {
   element.text = text;
 
   var outputStream = new ActiveXObject("ADODB.Stream");
-  outputStream.Type = 1;
-  outputStream.Open();
-  outputStream.Write(element.nodeTypedValue);
-  outputStream.SaveToFile(to, 2);
+  outputStream.type = 1;
+  outputStream.open();
+  outputStream.write(element.nodeTypedValue);
+  outputStream.saveToFile(to, 2);
 }
 
 
@@ -505,8 +505,6 @@ function fetch(options, callback) {
 
   xhr.open(method, url, isAsync)
 
-  err(method + ' ' + url)
-
   if (options.headers) {
     for (var name in options.headers) {
       var value = options.headers[name]
@@ -572,7 +570,7 @@ function httpPOST(url, data) {
 
   var message = {
     server:   'smtp.office365.com',
-    port:     25, // For use with office365, dont include the port
+    port:     25, // Don't include the port if you are targeting offiche365
     username: 'docrequest@lordco.com',
     password: 'secret',
     usessl:   true,
@@ -723,6 +721,15 @@ function trim(string) {
 }
 
 
+/*
+ * Shell
+ */
+
+function runCommand(cmd) {
+  var shell = new ActiveXObject('WScript.Shell')
+  return shell.run('cmd /c ' + cmd, 0, true)
+}
+
 
 /*
  * Logging
@@ -735,7 +742,6 @@ function debug(msg, indent) {
       return '\x1b[' + n + 'm' + s + '\x1b[0m';
     }
   }
-
   var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94');
 
   indent = indent || '';
