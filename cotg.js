@@ -60,6 +60,60 @@ function send_document(options) {
   return httpPOST(url, data, 'multipart/form-data')
 }
 
+/**
+ * Sends document metadata to the COTG Server. v1 does not support sending document DATA, only metadata (url download)
+ * @param beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
+ * @param StoreID {string} : The Store ID (aka Repository ID or COTG Store ID) where the document is sent.
+ * @param Password {string} : The Respository's password for the above ID.
+ * @param FileURL {string url} : The URL the document will be downloaded from (what the COTG App requests).
+ * @param Title {string} : The document title, appearing in the repository, library and at the top of the document.
+ * @param Author {string} : The author of the document, appearing in the document's details.
+ * @param Description {string} : The description of the document, appearing in the document's details.
+ * @param Category {string} : The category of the document, used to sort documents in the repository and library.
+ * @param Recipient {string email} : The email of the recipient, should match a user registered on the Repository.
+ * @param autodownload {boolean} : Whether the document will automatically download to the user's device in the Library, and notify the user. Default False
+ * @param bookshelfTime {integer} : How many days the document stays on the device after download.
+ * @param Expiration {string yyyy-mm-dd} : The expiration for the document on the repository. Will expire at 11:59 PM on the indicated date.
+ * @param TimezoneModifier {string} : The timezone different from UTC. For example, +08 or -05.
+ */
+function sendURLtoCOTG(options) {
+  var url  = options.beta ?
+    'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
+  var data = {
+    StoreID:          options.storeID,
+    Password:         options.password,
+    FileToPublishURL: options.fileURL,
+    FileType:         'HTML',
+    Title:            options.title,
+    Author:           options.author,
+    Description:      options.description,
+    'Apollo-Categ':   options.category,
+    'Apollo-Dest':    options.recipient,
+    Autodownload:     options.autodownload ? 'yes' : 'no',
+    Expiration:       options.expiration
+  }
+
+  var response;
+  try {
+    response = httpPOST(url, data)
+  } catch (err) {
+    return { ok:false, message:"XMLHttp error: '" + (err.number & 0xFFFF).toString() + "' with description: '" + err.description +"'"};
+  }
+
+  var xmlDoc = new ActiveXObject("msxml2.DOMDocument.6.0");
+  xmlDoc.async = false;
+  xmlDoc.loadXML( ok);
+
+  if (xmlDoc.parseError.errorCode != 0)
+    return { ok:false, message:"There was an error parsing the response from the COTG Server: " + xmlDoc.parseError + ", details: " + xmlDoc.parseError.srcText};
+
+  var result = xmlDoc.selectSingleNode("//ApolloUploadResult");
+
+  if (result.getAttribute("Status") == "Error")
+    return { ok:false, message:"Could no upload document: " + result.text};
+
+  return { ok:true, message: result.selectSingleNode("DocumentID").text};
+}
 
 // Send a post request to @url
 function httpPOST(url, data, enctype) {
@@ -86,7 +140,6 @@ function httpPOST(url, data, enctype) {
 
   return http.responseText
 }
-
 
 // Encode data as multipart/form-data (see HTML specs)
 function encodeMultipartFormData(boundary, data) {
@@ -139,78 +192,6 @@ function readFile(path){
 
 
 
-function send_document_metadata(options) {
-  /*
-   * DESCRIPTION
-   * Sends document metadata to the COTG Server. v1 does not support sending document DATA, only metadata (url download)
-   * @param beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
-   * @param StoreID {string} : The Store ID (aka Repository ID or COTG Store ID) where the document is sent.
-   * @param Password {string} : The Respository's password for the above ID.
-   * @param FileURL {string url} : The URL the document will be downloaded from (what the COTG App requests).
-   * @param Title {string} : The document title, appearing in the repository, library and at the top of the document.
-   * @param Author {string} : The author of the document, appearing in the document's details.
-   * @param Description {string} : The description of the document, appearing in the document's details.
-   * @param Category {string} : The category of the document, used to sort documents in the repository and library.
-   * @param Recipient {string email} : The email of the recipient, should match a user registered on the Repository.
-   * @param autodownload {boolean} : Whether the document will automatically download to the user's device in the Library, and notify the user. Default False
-   * @param bookshelfTime {integer} : How many days the document stays on the device after download.
-   * @param Expiration {string yyyy-mm-dd} : The expiration for the document on the repository. Will expire at 11:59 PM on the indicated date.
-   * @param TimezoneModifier {string} : The timezone different from UTC. For example, +08 or -05.
-
-   * RETURN VALUES
-   * Returns a JSON structure containing 2 values.
-   * @response {boolean} : "true" if the document was sent succesfully. "false" if an error occured.
-   * @message {string} : If @response is true, contains the Document ID. If @response is false, contains an error message.
-
-   * EXAMPLE USAGE:
-
-   response = create_document(false, '20010101', 'FAEKPWWD', 'http://example.com/?uuid=34lkjerjwkjhfasiuy', 'My Title', 'John Doe', 'This is a document', 'custom', 'user@example.com', '2017-01-01', "+05", true, 2);
-   if(!response.response) {
-     Watch.Log("Error occured: " + response.message,1);
-   } else {
-     documentID = response.message;
-     // store in database or something.
-   }
-   *********************/
-
-  var url  = options.beta ? 'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
-  var data = {
-    StoreID:          options.storeID,
-    Password:         options.password,
-    FileToPublishURL: options.fileURL,
-    FileType:         'HTML',
-    Title:            options.title,
-    Author:           options.author,
-    Description:      options.description,
-    'Apollo-Categ':   options.category,
-    'Apollo-Dest':    options.recipient,
-    Autodownload:     options.autodownload ? 'yes' : 'no',
-    Expiration:       options.expiration
-  }
-
-  var response;
-  try {
-    response = httpPOST(url, data)
-  } catch (err) {
-    return {response:false, message:"WinHTTP returned error: '" + (err.number & 0xFFFF).toString() + "' with description: '" + err.description +"'"};
-  }
-
-  // Load the response in the XML API
-  var xmlDoc = new ActiveXObject("msxml2.DOMDocument.6.0");
-  xmlDoc.async = false;
-  xmlDoc.loadXML(response);
-
-  if (xmlDoc.parseError.errorCode != 0)
-    return {response:false, message:"There was an error parsing the response from the COTG Server: " + xmlDoc.parseError + ", details: " + xmlDoc.parseError.srcText};
-
-  // Get the response code from the appropriate node.
-  var response_node = xmlDoc.selectSingleNode("//ApolloUploadResult");
-
-  if(response_node.getAttribute("Status") == "Error")
-    return {response:false, message:"Could no upload document: " + response_node.text};
-
-  return {response:true, message: response_node.selectSingleNode("DocumentID").text};
-}
 
 function delete_document(beta, StoreID, Password, DocumentID) {
   /*
