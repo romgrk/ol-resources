@@ -6,7 +6,7 @@ initJSON()
 
 
 var repository = 'oltest'
-var password   = ''
+var password   = 'qpalzm'
 
 var home = fetch({
   url: 'https://config-us.captureonthego.com',
