@@ -6,7 +6,7 @@ initJSON()
 
 
 var repository = 'oltest'
-var password   = 'qpalzm'
+var password   = ''
 
 var home = fetch({
   url: 'https://config-us.captureonthego.com',
@@ -64,6 +64,8 @@ while (result = emailPattern.exec(usersHTML)) {
   }
 }
 
+
+/* Here we have them */
 debug(emails)
 
 
@@ -138,8 +140,8 @@ function initJSON() {
 }
 
 
-function log(msg) { WScript.stdout.WriteLine(toString(msg)); }
-function err(msg) { WScript.stdout.WriteLine(toString(msg)); }
+function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
+function err(msg) { try { Watch.log(toString(msg), 1) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
 function toString(value) {
   if (typeof value == 'string') return value;
   if (typeof value == 'object') return JSON.stringify(value)
