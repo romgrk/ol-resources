@@ -4,7 +4,7 @@
 
 var options = {
     storeID:          'oltest'
-  , password:         'qpalzm'
+  , password:         ''
   , title:            'File'
   , file:             readFile('c:/users/gregoirr/tmp/index.html')
   , author:           'romgrk'
