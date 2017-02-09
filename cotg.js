@@ -19,11 +19,11 @@ var options = {
 
 var res = send_document(options)
 
-debug(res)
+debug('DocumentID is ' + res.message)
 
 
 /**
- Sends document metadata to the COTG Server.
+ Sends document content to the COTG Server.
  @param options.beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
  @param options.storeID {string} : The Store ID (aka Repository ID or COTG Store ID) where the document is sent.
  @param options.password {string} : The Respository's password for the above ID.
@@ -36,10 +36,12 @@ debug(res)
  @param options.autodownload {boolean} : Whether the document will automatically download to the user's device in the Library, and notify the user. Default False
  @param options.bookshelfTime {integer} : How many days the document stays on the device after download.
  @param options.expiration {string yyyy-mm-dd} : The expiration for the document on the repository. Will expire at 11:59 PM on the indicated date.
- @param options.timezoneModifier {string} : The timezone different from UTC. For example, +08 or -05.
+
+ @returns {object} a JSON structure containing 2 values.
+ @returns .ok {boolean} : true or false
+ @returns .message {string} : if .ok is true, contains the documentID; otherwise, an error message
  */
 function send_document(options) {
-  //var url = 'http://localhost:8080/submit'
   var url = options.beta ? 'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
 
   var data = {
@@ -57,62 +59,148 @@ function send_document(options) {
   //, BookshelfLifetime: options.bookshelfTime || 0
   }
 
-  return httpPOST(url, data, 'multipart/form-data')
+  var req = httpPOST(url, data, 'multipart/form-data')
+
+  return parseCOTGResponse(req, '//ApolloUploadResult', 'DocumentID')
 }
 
+
 /**
- * Sends document metadata to the COTG Server. v1 does not support sending document DATA, only metadata (url download)
- * @param beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
- * @param StoreID {string} : The Store ID (aka Repository ID or COTG Store ID) where the document is sent.
- * @param Password {string} : The Respository's password for the above ID.
- * @param FileURL {string url} : The URL the document will be downloaded from (what the COTG App requests).
- * @param Title {string} : The document title, appearing in the repository, library and at the top of the document.
- * @param Author {string} : The author of the document, appearing in the document's details.
- * @param Description {string} : The description of the document, appearing in the document's details.
- * @param Category {string} : The category of the document, used to sort documents in the repository and library.
- * @param Recipient {string email} : The email of the recipient, should match a user registered on the Repository.
- * @param autodownload {boolean} : Whether the document will automatically download to the user's device in the Library, and notify the user. Default False
- * @param bookshelfTime {integer} : How many days the document stays on the device after download.
- * @param Expiration {string yyyy-mm-dd} : The expiration for the document on the repository. Will expire at 11:59 PM on the indicated date.
- * @param TimezoneModifier {string} : The timezone different from UTC. For example, +08 or -05.
+ Sends document URL to the COTG Server
+ @param options.beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
+ @param options.storeID {string} : The Store ID (aka Repository ID or COTG Store ID) where the document is sent.
+ @param options.password {string} : The Respository's password for the above ID.
+ @param options.fileURL {string url} : The URL the document will be downloaded from (what the COTG App requests).
+ @param options.title {string} : The document title, appearing in the repository, library and at the top of the document.
+ @param options.author {string} : The author of the document, appearing in the document's details.
+ @param options.description {string} : The description of the document, appearing in the document's details.
+ @param options.category {string} : The category of the document, used to sort documents in the repository and library.
+ @param options.recipient {string email} : The email of the recipient, should match a user registered on the Repository.
+ @param options.autodownload {boolean} : Whether the document will automatically download to the user's device in the Library, and notify the user. Default False
+ @param options.bookshelfTime {integer} : How many days the document stays on the device after download.
+ @param options.expiration {string yyyy-mm-dd} : The expiration for the document on the repository. Will expire at 11:59 PM on the indicated date.
+
+ @returns {object} a JSON structure containing 2 values.
+ @returns .ok {boolean} : true or false
+ @returns .message {string} : if .ok is true, contains the documentID; otherwise, an error message
  */
-function sendURLtoCOTG(options) {
-  var url  = options.beta ?
-    'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
+function send_document_url(options) {
+  var url  = options.beta ?  'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
+
   var data = {
-    StoreID:          options.storeID,
-    Password:         options.password,
-    FileToPublishURL: options.fileURL,
-    FileType:         'HTML',
-    Title:            options.title,
-    Author:           options.author,
-    Description:      options.description,
-    'Apollo-Categ':   options.category,
-    'Apollo-Dest':    options.recipient,
-    Autodownload:     options.autodownload ? 'yes' : 'no',
-    Expiration:       options.expiration
+      StoreID:          options.storeID
+    , Password:         options.password
+    , FileToPublishURL: options.fileURL
+    , FileType:         'HTML'
+    , Title:            options.title
+    , Author:           options.author
+    , Description:      options.description
+    , 'Apollo-Categ':   options.category
+    , 'Apollo-Dest':    options.recipient
+    , Autodownload:     options.autodownload ? 'yes' : 'no'
+    , Expiration:       options.expiration
   }
 
-  var response;
-  try {
-    response = httpPOST(url, data)
-  } catch (err) {
-    return { ok:false, message:"XMLHttp error: '" + (err.number & 0xFFFF).toString() + "' with description: '" + err.description +"'"};
+  var req = httpPOST(url, data)
+
+  return parseCOTGResponse(req, '//ApolloUploadResult', 'DocumentID')
+}
+
+
+/**
+ * Deletes document from the COTG Server
+ @param options.beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
+ @param options.storeID {string} : The Store ID (aka Repository ID or COTG Store ID) from where the document is deleted.
+ @param options.password {string} : The Respository's password for the above ID.
+ @param options.documentID {string} : The ID of the document on the COTG Server. Obtained from the send_document_metadata() function or through the COTG Tracking database (mdb)
+
+ @returns {object} a JSON structure containing 2 values.
+ @returns .ok {boolean} : "true" if the document was deleted succesfully. "false" if an error occured.
+ @returns .message {string} : If @response is true, contains a confirmation message. If @response is false, contains an error message.
+
+ Usage:
+
+  var options = {
+      beta:       false
+    , storeID:    '20010101'
+    , password:   'FAEKPWWD'
+    , documentID: '3245gik234'
   }
 
-  var xmlDoc = new ActiveXObject("msxml2.DOMDocument.6.0");
-  xmlDoc.async = false;
-  xmlDoc.loadXML( ok);
+  var res = delete_document(options)
+
+ */
+function delete_document(options) {
+  var url  = options.beta ?  'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
+
+  var data = {
+      StoreID:       options.storeID
+    , Password:      options.password
+    , DocIDToDelete: options.documentID
+  }
+
+  var req = httpPOST(url, data)
+
+  return parseCOTGResponse(req, '//ApolloDeleteResult')
+}
+
+
+/**
+ * Change user password
+ @param options.beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
+ @param options.storeID {string} : The Store ID (aka Repository ID or COTG Store ID) where the user is located.
+ @param options.userID {string} : The UserID of which to change the password.
+ @param options.oldPassword {string} : The user's previous password. Required.
+ @param options.newPassword {string} : The new password for the user. Required.
+
+ @returns {object} a JSON structure containing 2 values.
+ @returns .ok {boolean} : "true" if the document was deleted succesfully. "false" if an error occured.
+ @returns .message {string} : If @response is true, contains a confirmation message. If @response is false, contains an error message.
+
+ Usage:
+
+  var options = {
+      beta:        false
+    , storeID:     '20010101'
+    , userID:      '3245gik234'
+    , oldPassword: 'FAKEPWD'
+    , newPassword: 'NEWFAKEPWD'
+  }
+
+  var res = change_password(options)
+
+ */
+function change_password(beta, StoreID, UserID, OldPassword, NewPassword) {
+  var url  = options.beta ?  'https://svc-beta-us.tureonth.com/WS/depot.ws' : 'https://svc-us.tureonth.com/WS/depot.ws'
+
+  var data = {
+      StoreID:     options.storeID
+    , UserID:      options.userID
+    , OldPassword: options.oldPassword
+    , NewPassword: options.newPassword
+  }
+
+  var req = httpPOST(url, data)
+
+  return parseCOTGResponse(req, '//ApolloRequestResult')
+}
+
+
+// Parses COTG server response
+function parseCOTGResponse(text, node, okNode) {
+  var xmlDoc = new ActiveXObject("msxml2.DOMDocument.6.0")
+  xmlDoc.async = false
+  xmlDoc.loadXML(text)
 
   if (xmlDoc.parseError.errorCode != 0)
-    return { ok:false, message:"There was an error parsing the response from the COTG Server: " + xmlDoc.parseError + ", details: " + xmlDoc.parseError.srcText};
+    return { ok: false, message: 'Error parsing COTG Server response: ' + xmlDoc.parseError + ', details: ' + xmlDoc.parseError.srcText, source: text }
 
-  var result = xmlDoc.selectSingleNode("//ApolloUploadResult");
+  var result = xmlDoc.selectSingleNode(node)
 
-  if (result.getAttribute("Status") == "Error")
-    return { ok:false, message:"Could no upload document: " + result.text};
+  if (result.getAttribute('Status') == 'Error')
+    return { ok: false, message: result.xml }
 
-  return { ok:true, message: result.selectSingleNode("DocumentID").text};
+  return { ok: true, message: okNode != undefined ? result.selectSingleNode(okNode).text : '' }
 }
 
 // Send a post request to @url
@@ -183,157 +271,13 @@ function queryString(params) {
 
 // Read file (sync)
 function readFile(path){
-  var fs = new ActiveXObject("Scripting.FileSystemObject");
-  var file = fs.OpenTextFile(path, 1, true);
-  var res = file.ReadAll();
-  file.Close();
-  return res;
+  var fs = new ActiveXObject("Scripting.FileSystemObject")
+  var file = fs.OpenTextFile(path, 1, true)
+  var res = file.ReadAll()
+  file.Close()
+  return res
 }
 
-
-
-
-function delete_document(beta, StoreID, Password, DocumentID) {
-  /*
-   * DESCRIPTION
-   * Requests the deletion of a document on the COTG Server.
-
-   * PARAMETERS
-   * @beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
-   * @StoreID {string} : The Store ID (aka Repository ID or COTG Store ID) from where the document is deleted.
-   * @Password {string} : The Respository's password for the above ID.
-   * @DocumentID {string} : The ID of the document on the COTG Server. Obtained from the send_document_metadata() function or through the COTG Tracking database (mdb)
-
-   * RETURN VALUES
-   * Returns a JSON structure containing 2 values.
-   * @response {boolean} : "true" if the document was deleted succesfully. "false" if an error occured.
-   * @message {string} : If @response is true, contains a confirmation message. If @response is false, contains an error message.
-
-   * EXAMPLE USAGE:
-
-    var response = delete_document(false, '20010101', 'FAEKPWWD', '3245gik234');
-    Watch.Log(response['message'], 2);
-   */
-
-  beta = typeof beta !== 'undefined' ? beta : false;
-
-  // Initialize the reponse object
-  var res = {response:false, message:"Something went wrong, this function did not properly set the response!"};
-
-  var post_data = 'StoreID='+StoreID+
-    '&Password='+Password+
-    '&DocIDToDelete='+DocumentID;
-  Watch.Log(post_data, 2);
-
-
-  // Grab the XML response.
-  try {
-    var http = new ActiveXObject("WinHttp.WinHttpRequest.5.1");
-    if(beta) {
-      http.open('POST', "https://svc-beta-us.tureonth.com/WS/depot.ws", false);
-    } else {
-      http.open('POST', "https://svc-us.tureonth.com/WS/depot.ws", false);
-    }
-    http.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    http.send(post_data);
-  }
-  catch (objError) {
-    Watch.Log("WinHTTP returned error: '" + (objError.number & 0xFFFF).toString() + "' with description: '" + objError.description +"'",1);
-  }
-
-  response = http.responseText;
-  Watch.Log(response, 2);
-
-  // Load the response in the XML API
-  var xmlDoc = new ActiveXObject("msxml2.DOMDocument.6.0");
-  xmlDoc.async = false;
-  xmlDoc.loadXML(response);
-  if (xmlDoc.parseError.errorCode != 0) {
-    res = {response:false, message:"There was an error parsing the response from the COTG Server: " + xmlDoc.parseError + ", details: " + xmlDoc.parseError.srcText};
-  } else {
-    // Get the response code from the appropriate node.
-    response_node = xmlDoc.selectSingleNode("//ApolloDeleteResult");
-    Watch.Log(response_node.xml,2);
-    response_status = response_node.getAttribute("Status");
-    if(response_status == "Error") {
-      res = {response:false, message:"Could not delete the document: " + response_node.text};
-    } else {
-      res = {response:true, message:"The document was deleted correctly."};
-    }
-  }
-  return res;
-}
-
-function change_password(beta, StoreID, UserID, OldPassword, NewPassword) {
-  /*
-   * DESCRIPTION
-   * Requests a user password change on the COTG Server
-
-   * PARAMETERS
-   * @beta {boolean} : Whether to use Nu-Book's development/beta server. Default False.
-   * @StoreID {string} : The Store ID (aka Repository ID or COTG Store ID) where the user is located.
-   * @UserID {string} : The UserID of which to change the password.
-   * @OldPassword {string} : The user's previous password. Required.
-   * @NewPassword {string} : The new password for the user. Required.
-
-   * RETURN VALUES
-   * Returns a JSON structure containing 2 values.
-   * @response {boolean} : "true" if the password was changed succesfully. "false" if an error occured.
-   * @message {string} : If @response is true, contains a confirmation message. If @response is false, contains an error message.
-
-   * EXAMPLE USAGE:
-
-    var response = change_password(false, '20010101', 'FAEKPWWD', '3245gik234', '5345lkj345');
-    Watch.Log(response['message'], 2);
-   */
-
-  beta = typeof beta !== 'undefined' ? beta : false;
-  // Initialize the reponse object
-  var res = {response:false, message:"Something went wrong, this function did not properly set the response!"};
-
-  var post_data = 'StoreID='+StoreID+
-    '&UserID='+UserID+
-    '&OldPassword='+OldPassword+
-    '&NewPassword='+NewPassword;
-  Watch.Log(post_data, 2);
-
-  // Grab the XML response.
-  // NOTE: slice(3) is used because the response starts with a line return + 3 weird characters (ï»¿)
-  try {
-    var http = new ActiveXObject("WinHttp.WinHttpRequest.5.1");
-    if(beta) {
-      http.open('POST', "https://svc-beta-us.tureonth.com/WS/DepotCreation.ws", false);
-    } else {
-      http.open('POST', "https://svc-us.tureonth.com/WS/DepotCreation.ws", false);
-    }
-    http.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    http.send(post_data);
-  } catch (objError) {
-    Watch.Log("WinHTTP returned error: '" + (objError.number & 0xFFFF).toString() + "' with description: '" + objError.description +"'",1);
-  }
-
-  response = http.responseText;
-  Watch.Log(response, 2);
-
-  // Load the response in the XML API
-  var xmlDoc = new ActiveXObject("msxml2.DOMDocument.6.0");
-  xmlDoc.async = false;
-  xmlDoc.loadXML(response);
-  if (xmlDoc.parseError.errorCode != 0) {
-    res = {response:false, message:"There was an error parsing a Change Password request to the Apollo Server: " + xmlDoc.parseError + ", details: " + xmlDoc.parseError.srcText};
-  } else {
-    // Get the response code from the appropriate node.
-    response_node = xmlDoc.selectSingleNode("//ApolloRequestResult");
-    Watch.Log(response_node.xml,2);
-    response_status = response_node.getAttribute("Status");
-    if(response_status == "Error") {
-      res = {response:false, message:"A password change request to the Apollo server failed. The response was: " + response_node.text};
-    } else {
-      res = {response:true, message:"The password was changed successfully on the server."};
-    }
-  }
-  return res;
-}
 
 
 
@@ -341,29 +285,22 @@ function change_password(beta, StoreID, UserID, OldPassword, NewPassword) {
  * Logging
  */
 
-
+function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(''+msg) } }
+function err(msg) { try { Watch.log(toString(msg), 1) } catch(e) { WScript.stdout.WriteLine(''+msg) } }
+function toString(value) { return JSON.stringify(value) }
 function debug(msg, indent) {
+  try { Watch; log(msg); return; } catch(e) {}
   var c = function (n) {
-    return function (s) {
-      return '\x1b[' + n + 'm' + s + '\x1b[0m';
-    }
+    return function (s) { return '\x1b[' + n + 'm' + s + '\x1b[0m'; }
   }
-
   var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94');
-
   indent = indent || '';
-  if (typeof msg == 'number') {
-    log(yellow(msg))
-    return
-  }
-  if (typeof msg == 'boolean') {
-    log(yellow(msg))
-    return
-  }
-  if (typeof msg == 'string') {
-    log(green('"' + msg + '"'));
-    return;
-  }
+  if (typeof msg == 'number')
+    return log(yellow(msg))
+  if (typeof msg == 'boolean')
+    return log(yellow(msg))
+  if (typeof msg == 'string')
+    return log(green('"' + msg + '"'));
   for (var i in msg) {
     if (typeof msg[i] == 'object') {
       log(indent + yellow(i) + ':');
@@ -372,8 +309,4 @@ function debug(msg, indent) {
       log(indent + yellow(i) + ':' + msg[i]);
     }
   }
-}
-function log(msg) { WScript.stdout.WriteLine(toString(msg)); }
-function toString(value) {
-  return ''+value
 }
