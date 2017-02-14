@@ -621,7 +621,7 @@ function fetch(options) {
   var isAsync = false
 
   try      { xhr = new ActiveXObject('MSXML2.ServerXMLHTTP') }
-  catch(e) { xhr = new XMLHttpRequest(); isAsync = true }
+  catch(e) { xhr = new XMLHttpRequest(); isAsync = true; }
 
   var url    = options.url
   var method = options.method || 'GET'
@@ -629,6 +629,8 @@ function fetch(options) {
 
   if (options.data && method === 'GET')
     url += '?' + queryString(options.data)
+
+  xhr.responseType = 'arraybuffer'
 
   xhr.open(method, url, isAsync)
 
@@ -658,13 +660,17 @@ function fetch(options) {
 
   function getResult() {
     var operationId = xhr.getResponseHeader('operationId')
+    var buffer      = xhr.response
+
     if (xhr.status >= 300)
-      return { error: true, status: xhr.status, text: xhr.statusText, response: xhr.responseText }
+      return { error: true, status: xhr.status, text: xhr.statusText, response: arraybufferToString(buffer) }
     if (xhr.getResponseHeader('Content-Type') === 'application/json')
-      return JSON.parse(xhr.responseText)
-    if (xhr.responseText === '' && operationId)
+      return JSON.parse(arraybufferToString(buffer))
+    if (xhr.getResponseHeader('Content-Type') === 'application/octet-stream')
+      return buffer
+    if (operationId)
       return operationId
-    return xhr.responseText
+    return arraybufferToString(buffer)
   }
 
 
@@ -678,6 +684,11 @@ function fetch(options) {
     send()
     return getResult()
   }
+}
+
+// Converts arraybuffer to string
+function arraybufferToString(buf) {
+  return String.fromCharCode.apply(null, new Uint8Array(buf))
 }
 
 // Return base64 encoded text
