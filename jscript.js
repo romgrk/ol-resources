@@ -6,30 +6,14 @@
  */
 'use strict';
 
-try {
-Watch;
+
 function get(name) { return Watch.getVariable(name); }
 function set(name, value) { Watch.setVariable(name, value); }
-function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(''+msg) } }
-function err(msg) { try { Watch.log(toString(msg), 1) } catch(e) { WScript.stdout.WriteLine(''+msg) } }
+function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
+function err(msg) { try { Watch.log(toString(msg), 1) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
 function exp(string) { return Watch.expandString(string); }
 function xml(string) { return Watch.expandString("xmlget('/request[1]/values[1]/" + string + "[1]',Value,KeepCase,No Trim)"); }
-function toString(value) {
-  if (typeof value == 'string') return value;
-  if (typeof value == 'object') return JSON.stringify(value)
-  return ''+value
-}
-} catch (e) {
-  var global = {};
-  function get(name) { return global[name]; }
-  function set(name, value) { global[name] = value; }
-  function log(msg) { WScript.stdout.WriteLine(toString(msg)); }
-  function err(msg) { WScript.stdout.WriteLine(toString(msg)); }
-  function exp(string) { return string; }
-  function toString(value) {
-    return ''+value
-  }
-}
+function toString(value) { try { return JSON.stringify(value) } catch(e) { return ''+value } }
 
 
 
@@ -746,26 +730,12 @@ function execCommand(cmd, cwd) {
 
 
 function debug(msg, indent) {
-  var c = function (n) {
-    return function (s) {
-      return '\x1b[' + n + 'm' + s + '\x1b[0m';
-    }
-  }
+  var c = function (n) { return function (s) { return '\x1b[' + n + 'm' + s + '\x1b[0m' } }
   var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94');
-
   indent = indent || '';
-  if (typeof msg == 'number') {
-    log(yellow(msg))
-    return
-  }
-  if (typeof msg == 'boolean') {
-    log(yellow(msg))
-    return
-  }
-  if (typeof msg == 'string') {
-    log(green('"' + msg + '"'));
-    return;
-  }
+  if (typeof msg == 'number')  return log(yellow(msg))
+  if (typeof msg == 'boolean') return log(yellow(msg))
+  if (typeof msg == 'string')  return log(green('"' + msg + '"'))
   for (var i in msg) {
     if (typeof msg[i] == 'object') {
       log(indent + yellow(i) + ':');
@@ -775,5 +745,3 @@ function debug(msg, indent) {
     }
   }
 }
-
-
