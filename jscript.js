@@ -730,6 +730,15 @@ function runCommand(cmd) {
   return shell.run('cmd /c ' + cmd, 0, true)
 }
 
+function execCommand(cmd, cwd) {
+  var shell = new ActiveXObject('WScript.Shell')
+  if (cwd)
+    shell.currentDirectory = cwd
+  log(shell.currentDirectory)
+  var handle = shell.exec(cmd)
+  return handle.stdOut.readAll()
+}
+
 
 /*
  * Logging
