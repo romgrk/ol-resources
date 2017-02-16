@@ -263,9 +263,19 @@ function appendFile(path, content){
   file.Close();
 }
 
-function deleteFile(path, force){
-  var fs = new ActiveXObject('Scripting.FileSystemObject');
+function deleteFile(path){
+  var fs = new ActiveXObject('Scripting.FileSystemObject')
   fs.deleteFile(path)
+}
+
+function moveFile(source, destination){
+  var fs = new ActiveXObject('Scripting.FileSystemObject')
+  fs.moveFile(source, destination)
+}
+
+function copyFile(source, destination, overwrite){
+  var fs = new ActiveXObject('Scripting.FileSystemObject')
+  fs.copyFile(source, destination, overwrite)
 }
 
 function listFolders(path) {
