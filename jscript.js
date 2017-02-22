@@ -729,6 +729,7 @@ function execCommand(cmd, cwd) {
  */
 
 
+/*
 function debug(msg, indent) {
   var c = function (n) { return function (s) { return '\x1b[' + n + 'm' + s + '\x1b[0m' } }
   var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94');
@@ -742,6 +743,57 @@ function debug(msg, indent) {
       debug(msg[i], indent + '  ')
     } else {
       log(indent + yellow(i) + ':' + msg[i]);
+    }
+  }
+}
+*/
+
+function fmt(msg, indent) {
+  indent = indent || '';
+  var c = function (n) { return function (s) { return '\x1b[' + n + 'm' + s + '\x1b[0m' } }
+  var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94'), grey = c('90'), brown = c('38;5;94');
+  if (typeof msg == 'number')  return yellow(msg)
+  if (typeof msg == 'boolean') return yellow(msg)
+  if (typeof msg == 'string')  return green('"' + msg + '"')
+  if (msg === null)      return red('null')
+  if (msg === undefined) return red('undefined')
+  if (msg.constructor == Array) {
+    var res = ''
+    for (var i = 0; i < msg.length; i++)
+      res += indent + ' ' + fmt(msg[i], indent + '  ') + ',\n'
+    res = '[' + res.substring(1)
+    res = res.substring(0, res.length - 2)
+    res += '] ' + grey('(' + msg.length + ')')
+    return res
+  } else {
+    var res = grey('{ ')
+    for (var i in msg) {
+      res += brown(i) + ': ' + fmt(msg[i]) + ', '
+    }
+    res = res.substring(0, res.length - 2)
+    res += grey(' }')
+    return res
+  }
+}
+
+function debug(msg, indent) {
+  indent = indent || '';
+  if (typeof msg == 'number'
+    || typeof msg == 'boolean'
+    || typeof msg == 'string'
+    || msg === undefined
+    || msg === null )  return log(fmt(msg))
+
+  if (msg.constructor == Array) {
+    log(fmt(msg))
+  } else {
+    for (var i in msg) {
+      if (typeof msg[i] == 'object' && msg != null) {
+        log(indent + i + ':');
+        debug(msg[i], indent + '  ')
+      } else {
+        log(indent + i + ':' + fmt(msg[i]))
+      }
     }
   }
 }
