@@ -1,5 +1,15 @@
 /*
  * users_cotg_ie.js
+ *
+ * Important note:
+ * If this script is run as a service (with LocalSystem account) on a server with 
+ * enhanced security in InternetExplorer, it will fail because IE needs to have
+ * cookies enabled to maintain the connection.
+ * To enable cookies:
+ *  - Dowload PsExec (https://technet.microsoft.com/en-us/sysinternals/pxexec.aspx)
+ *  - Run: "psexec "C:\program files\Internet Explorer\iexplore.exe"
+ *  - Enable cookies or add https://config-us.captureonthego.com/ to the list of trusted sites.
+ *  - Reboot
  */
 
 initJSON()
