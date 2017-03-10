@@ -104,9 +104,9 @@ const initFs = () => {
  */
 export const readFile = (fileName) => {
   return initFs().then((fs) => new Promise((resolve, reject) => {
-    fs.root.getFile(fileName, {}, function(fileEntry) {
+    fs.root.getFile(fileName, {}, (fileEntry) => {
       // fileEntry.isFile === true
-      // fileEntry.name == 'demo-log.txt'
+      // fileEntry.name == fileName (?)
 
       fileEntry.file((file) => {
 
@@ -126,7 +126,7 @@ export const readFile = (fileName) => {
  * Usage:
  *
  *  writeFile('file.txt', 'Hello!')
- *  .then(entry => console.log('Ok'))
+ *  .then(() => console.log('Ok'))
  *  .catch(err => console.error(err))
  */
 export const writeFile = (fileName, content) => {
