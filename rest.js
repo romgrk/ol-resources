@@ -3,223 +3,55 @@
  */
 
 
-//setupWorkflowTest()
-//setupBrowserTest()
-
-function setupWorkflowTest() {
-  var paths = {
-      dataFile:     'c:/users/gregoirr/dev/docs/quote.json'
-    , dataMapper:   'c:/users/gregoirr/dev/docs/quote_json.OL-datamapper'
-    , template:     'c:/users/gregoirr/dev/docs/quote_pdf.OL-template'
-    , jobPreset:    'c:/users/gregoirr/dev/docs/generic.ol-jobpreset'
-    , outputPreset: 'c:/users/gregoirr/dev/docs/PDF.ol-outputpreset'
-  }
-
-  var api = new RestAPI('ol-admin', 'secret')
-
-  //var contentSets  = api.contentsets.getAllContentSetEntities()
-  //log(contentSets)
-
-  //var contentSet   = api.contentsets.getContentItemsForContentSet(contentSets[0])
-  //log(contentSet)
-
-  //var pages        = api.contentsets.getPageDetailsForContentSet(contentSets[0])
-  //log(pages)
-
-  //var dataSets     = api.datasets.getAllDataSetEntities()
-  //log(dataSets)
-
-  //var dataRecords  = api.datasets.getDataRecordsForDataSet(dataSets[0])
-  //log(dataRecords)
-
-  var ack          = api.files.serviceHandshake()
-  log(ack)
-
-  var fileId       = api.files.uploadDataFile('file', false, readFile(paths.dataFile))
-  log(fileId)
-
-  var dmId         = api.files.uploadDataMappingConfiguration('dm', false, readFile(paths.dataMapper))
-  log(dmId)
-
-  var templateId   = api.files.uploadDesignTemplate('template', false, readFile(paths.template))
-  log(templateId)
-
-  var jobId        = api.files.uploadJobCreationPreset('job', false, readFile(paths.jobPreset))
-  log(jobId)
-
-  var outputId     = api.files.uploadOutputCreationPreset('output', false, readFile(paths.outputPreset))
-  log(outputId)
-
-  var config = {
-    datamining:      { config: dmId, identifier: fileId },
-    contentcreation: { config: templateId },
-    jobcreation:     { config: jobId },
-    outputcreation:  { config: outputId, createOnly: false }
-  }
-
-  var operationId  = api.print.processAllInOne(config)
-  log(operationId)
-
-  var progress
-  while (progress !== 'done') {
-    progress       = api.print.getProgressOfOperation(operationId)
-    log(progress)
-    sleep(100)
-  }
-
-  var res          = api.print.getResultOfOperationAsText(operationId)
-  log(res)
+var paths = {
+    dataFile:     'c:/users/gregoirr/dev/docs/quote.json'
+  , dataMapper:   'c:/users/gregoirr/dev/docs/quote_json.OL-datamapper'
+  , template:     'c:/users/gregoirr/dev/docs/quote_pdf.OL-template'
+  , jobPreset:    'c:/users/gregoirr/dev/docs/generic.ol-jobpreset'
+  , outputPreset: 'c:/users/gregoirr/dev/docs/PDF.ol-outputpreset'
 }
 
-function setupBrowserTest() {
-  var api = new RestAPI('ol-admin', 'secret')
+var api          = new RestAPI('ol-admin', 'secret')
 
-  document.body.innerHTML =
-    '<style>'
-  + 'table { width: 100%; }'
-  + 'td:first-child { background: #bbb; width: 100px; }'
-  + '</style>'
+var ack          = api.files.serviceHandshake()
+log(ack)
 
-  + '<table>'
-  + ' <tr><td>File:    </td><td> <input dataFile   type="file"/><br/></td></tr>'
-  + ' <tr><td>DM:      </td><td> <input dataMapper type="file"/><br/></td></tr>'
-  + ' <tr><td>Template:</td><td> <input template   type="file"/><br/></td></tr>'
-  + ' <tr><td>Job:     </td><td> <input job        type="file"/><br/></td></tr>'
-  + ' <tr><td>Output:  </td><td> <input output     type="file"/><br/></td></tr>'
-  + '</table>'
+var fileId       = api.files.uploadDataFile('file', false, readFile(paths.dataFile))
+log(fileId)
 
-  + '<input run-normal     type="button" value="Step-by-step"/>'
-  + '<input run-all-in-one type="button" value="All-In-One"/><br/>'
+var dmId         = api.files.uploadDataMappingConfiguration('dm', false, readFile(paths.dataMapper))
+log(dmId)
 
-  + '<span></span><br/>'
+var templateId   = api.files.uploadDesignTemplate('template', false, readFile(paths.template))
+log(templateId)
 
-  + '<input download-file  type="button" value="Download"/><br/>'
-  + '<object width="400" height="500" type="application/pdf"></object>'
+var jobId        = api.files.uploadJobCreationPreset('job', false, readFile(paths.jobPreset))
+log(jobId)
 
-  var runNormal    = document.querySelector('[run-normal]')
-  var runAll       = document.querySelector('[run-all-in-one]')
-  var downloadFile = document.querySelector('[download-file]')
-  var span         = document.querySelector('span')
-  var object       = document.querySelector('object')
-  var pdf          = document.querySelector('#pdf')
+var outputId     = api.files.uploadOutputCreationPreset('output', false, readFile(paths.outputPreset))
+log(outputId)
 
-  runAll.addEventListener('click', function(ev) {
-    Promise.all([
-        api.files.uploadDataFile('file',               false, document.querySelector('[dataFile]').files[0])
-      , api.files.uploadDataMappingConfiguration('dm', false, document.querySelector('[dataMapper]').files[0])
-      , api.files.uploadDesignTemplate('template',     false, document.querySelector('[template]').files[0])
-      , api.files.uploadJobCreationPreset('job',       false, document.querySelector('[job]').files[0])
-      , api.files.uploadOutputCreationPreset('output', false, document.querySelector('[output]').files[0])
-    ])
-    .then(function([fileId, dmId, templateId, jobId, outputId]) {
-      var config = {
-        datamining:      { config: dmId, identifier: fileId },
-        contentcreation: { config: templateId },
-        jobcreation:     { config: jobId },
-        outputcreation:  { config: outputId, createOnly: false },
-      }
-      return api.print.processAllInOne(config)
-    })
-    .then(function(operationId) {
-      return promiseWhile(isNotDone, function(progress) {
-        span.innerText = 'All-in-one... ' + progress
-        return api.print.getProgressOfOperation(operationId)
-      })
-      .then(function() {
-        span.innerText = 'All-in-one done'
-        return api.print.getResultOfOperation(operationId)
-      })
-    })
-    .then(function(data) {
-      window.result = data
-      object.setAttribute('data', pdfToDataURI(data))
-    })
-    .catch(function(msg) {
-      span.innerText = 'Error: ' + JSON.stringify(msg)
-    })
-  })
-
-  runNormal.addEventListener('click', function(ev) {
-    Promise.all([
-        api.files.uploadDataFile('file',               false, document.querySelector('[dataFile]').files[0])
-      , api.files.uploadDataMappingConfiguration('dm', false, document.querySelector('[dataMapper]').files[0])
-      , api.files.uploadDesignTemplate('template',     false, document.querySelector('[template]').files[0])
-      , api.files.uploadJobCreationPreset('job',       false, document.querySelector('[job]').files[0])
-      , api.files.uploadOutputCreationPreset('output', false, document.querySelector('[output]').files[0])
-    ])
-    .then(function([fileId, dmId, templateId, jobId, outputId]) {
-
-      return api.datamining.processDataMapping(dmId, fileId)
-      .then(function(operationId) {
-        return promiseWhile(isNotDone, function(progress) {
-          span.innerText = 'DataMapping... ' + progress
-          return api.datamining.getProgressOfOperation(operationId)
-        })
-        .then(function() { return api.datamining.getResultOfOperation(operationId) })
-      })
-      .then(function(datasetId) { return api.contentcreation.processContentCreation(templateId, datasetId) })
-      .then(function(operationId) {
-        return promiseWhile(isNotDone, function(progress) {
-          span.innerText = 'ContentCreation... ' + progress
-          return api.contentcreation.getProgressOfOperation(operationId)
-        })
-        .then(function() { return api.contentcreation.getResultOfOperation(operationId) })
-      })
-      .then(function(contentsetId) { return api.jobcreation.processJobCreationJSON(jobId, { identifiers: [contentsetId] }) })
-      .then(function(operationId) {
-        return promiseWhile(isNotDone, function(progress) {
-          span.innerText = 'JobCreation... ' + progress
-          return api.jobcreation.getProgressOfOperation(operationId)
-        })
-        .then(function() { return api.jobcreation.getResultOfOperation(operationId) })
-      })
-      .then(function(jobsetId) { return api.outputcreation.processOutputCreation(outputId, jobsetId) })
-      .then(function(operationId) {
-        return promiseWhile(isNotDone, function(progress) {
-          span.innerText = 'OutputCreation... ' + progress
-          return api.outputcreation.getProgressOfOperation(operationId)
-        })
-        .then(function() { return api.outputcreation.getResultOfOperation(operationId) })
-      })
-      .then(function(data) {
-        window.result = data
-        object.setAttribute('data', pdfToDataURI(data))
-      })
-    })
-    .catch(function(msg) {
-      span.innerText = 'Error: ' + JSON.stringify(msg)
-    })
-  })
-
-  downloadFile.addEventListener('click', function() {
-    download('file.pdf', pdfToDataURI(window.result))
-  })
-
-
-  function promiseWhile(condition, action, value) {
-    if (condition(value))
-      return action(value).then(promiseWhile.bind(null, condition, action))
-    return value
-  }
-
-  function isNotDone(value) {
-    return value !== 'done'
-  }
-
-  function download(filename, href) {
-    var element = document.createElement('a')
-    element.setAttribute('href', href)
-    element.setAttribute('download', filename)
-    element.style.display = 'none'
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
-  }
-
-  function pdfToDataURI(data) {
-    return 'data:application/pdf,' + encodeURIComponent(data)
-  }
+var config = {
+  datamining:      { config: dmId, identifier: fileId },
+  contentcreation: { config: templateId },
+  jobcreation:     { config: jobId },
+  outputcreation:  { config: outputId, createOnly: false }
 }
+
+var operationId  = api.print.processAllInOne(config)
+log(operationId)
+
+var progress
+while (progress !== 'done') {
+  progress       = api.print.getProgressOfOperation(operationId)
+  log(progress)
+  sleep(100)
+}
+
+var res          = api.print.getResultOfOperationAsText(operationId)
+log(res)
+
+
 
 
 function RestAPI(username, password, base) {
@@ -630,11 +462,12 @@ function fetch(options) {
   if (options.data && method === 'GET')
     url += '?' + queryString(options.data)
 
-  xhr.responseType = 'arraybuffer'
+  if (isAsync)
+    xhr.responseType = 'arraybuffer'
 
   xhr.open(method, url, isAsync)
 
-  err(method + ' ' + url)
+  log(method + ' ' + url)
 
   if (options.headers) {
     for (var name in options.headers) {
@@ -660,17 +493,19 @@ function fetch(options) {
 
   function getResult() {
     var operationId = xhr.getResponseHeader('operationId')
-    var buffer      = xhr.response
+    var buffer      = isAsync ? xhr.response : xhr.responseText
 
     if (xhr.status >= 300)
-      return { error: true, status: xhr.status, text: xhr.statusText, response: arraybufferToString(buffer) }
+      return { error: true, status: xhr.status, text: xhr.statusText, response: isAsync ? arraybufferToString(buffer) : buffer }
     if (xhr.getResponseHeader('Content-Type') === 'application/json')
-      return JSON.parse(arraybufferToString(buffer))
+      return JSON.parse(isAsync ? arraybufferToString(buffer) : buffer)
     if (xhr.getResponseHeader('Content-Type') === 'application/octet-stream')
       return buffer
     if (operationId)
       return operationId
-    return arraybufferToString(buffer)
+    if (isAsync)
+      return arraybufferToString(buffer)
+    return buffer
   }
 
 
@@ -723,15 +558,6 @@ function queryString(params) {
   return parts.join('&')
 }
 
-// Read file content
-function readFile(path){
-  var fs = new ActiveXObject("Scripting.FileSystemObject");
-  var file = fs.OpenTextFile(path, 1, true);
-  var res = file.ReadAll();
-  file.Close();
-  return res;
-}
-
 // Sleep for @ms milliseconds
 function sleep(ms) {
   var start = +new Date
@@ -750,15 +576,19 @@ function delay(ms) {
  * Utilities
  */
 
-function get(name) { return Watch.getVariable(name); }
-function set(name, value) { Watch.setVariable(name, value); }
-function log(msg) { try { Watch.log(toString(msg), 2); } catch (e) { try { WScript.stdout.WriteLine(toString(msg)) } catch (e) { console.log(msg) } } }
-function err(msg) { try { Watch.log(toString(msg), 1); } catch (e) { try { WScript.stdout.WriteLine(toString(msg)) } catch (e) { console.log(msg) } } }
-function exp(string) { return Watch.expandString(string); }
-function xml(string) { return Watch.expandString("xmlget('/request[1]/values[1]/" + string + "[1]',Value,KeepCase,No Trim)"); }
-function toString(value) {
-  if (typeof value == 'string') return value;
-  if (typeof value == 'object') return JSON.stringify(value)
-  return ''+value
+// Read file content
+function readFile(path){
+  var fs = new ActiveXObject("Scripting.FileSystemObject");
+  var file = fs.OpenTextFile(path, 1, true);
+  var res = file.ReadAll();
+  file.Close();
+  return res;
 }
 
+function get(name) { return Watch.getVariable(name); }
+function set(name, value) { Watch.setVariable(name, value); }
+function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
+function err(msg) { try { Watch.log(toString(msg), 1) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
+function exp(string) { return Watch.expandString(string); }
+function xml(string) { return Watch.expandString("xmlget('/request[1]/values[1]/" + string + "[1]',Value,KeepCase,No Trim)"); }
+function toString(value) { try { return JSON.stringify(value) } catch(e) { return ''+value } }
