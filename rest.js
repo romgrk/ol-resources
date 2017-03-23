@@ -273,7 +273,8 @@ function RestAPI(username, password, base) {
     serviceHandshake: function () {
       return GET('/workflow/contentcreation/html')
     },
-    processContentCreation: function (templateId, dataRecordId) {
+    processContentCreation: function (templateId, dataRecordId, section, inline) {
+      var q = queryString({ section: section, inline: inline || 'ALL' })
       return GET('/workflow/contentcreation/html/' + templateId + '/' + dataRecordId)
     },
     processContentCreationJSON: function (templateId, dataRecordId) {
