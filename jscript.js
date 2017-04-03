@@ -203,64 +203,64 @@ function stringToBinary(text, charSet) {
  */
 
 function readFile(path){
-  var fs = new ActiveXObject("Scripting.FileSystemObject");
-  var file = fs.OpenTextFile(path, 1, true);
-  var res = file.ReadAll();
-  file.Close();
-  return res;
+  var fs = new ActiveXObject("Scripting.FileSystemObject")
+  var file = fs.OpenTextFile(path, 1, true)
+  var res = file.ReadAll()
+  file.Close()
+  return res
 }
 
 function writeFile(path, content){
-  var fs = new ActiveXObject('Scripting.FileSystemObject');
-  var file = fs.OpenTextFile(path, 2, true);
-  file.Write(content);
-  file.Close();
+  var fs = new ActiveXObject('Scripting.FileSystemObject')
+  var file = fs.OpenTextFile(path, 2, true)
+  file.Write(content)
+  file.Close()
 }
 
 function readBinaryFile(path) {
-  var binStream = new ActiveXObject("ADODB.Stream")
-  binStream.Type = 1; //adTypeBinary
+  var binStream = new ActiveXObject('ADODB.Stream')
+  binStream.Type = 1 //adTypeBinary
   binStream.open()
   binStream.loadFromFile(path)
-  return binStream.read();
+  return binStream.read()
 }
 
 function writeBinaryFile(path, content) {
-  var outputStream = new ActiveXObject("ADODB.Stream");
-  outputStream.Type = 1;
-  outputStream.Open();
-  outputStream.Write(content);
-  outputStream.SaveToFile(path, 2);
-  outputStream.Close();
+  var outputStream = new ActiveXObject('ADODB.Stream')
+  outputStream.Type = 1
+  outputStream.Open()
+  outputStream.Write(content)
+  outputStream.SaveToFile(path, 2)
+  outputStream.Close()
 }
 
 function writeBinaryTextToFile(path, content) {
-  var outStreamW = new ActiveXObject("ADODB.Stream");
-  outStreamW.Type = 2;
+  var outStreamW = new ActiveXObject('ADODB.Stream')
+  outStreamW.Type = 2
   // Charset: the default value seems to be `UTF-16` (BOM `0xFFFE` for text files)
-  outStreamW.Charset = "UTF-8"; // important, see `cdoCharset Module Constants`
-  outStreamW.Open();
-  outStreamW.WriteText(content);
-  outStreamW.Position = 0;
+  outStreamW.Charset = 'UTF-8'; // important, see `cdoCharset Module Constants`
+  outStreamW.Open()
+  outStreamW.WriteText(content)
+  outStreamW.Position = 0
 
-  var outStreamA = new ActiveXObject("ADODB.Stream");
-  outStreamA.Type = 2;
-  outStreamA.Charset = "windows-1252"; // important, see `cdoCharset Module Constants`
-  outStreamA.Open();
+  var outStreamA = new ActiveXObject('ADODB.Stream')
+  outStreamA.Type = 2
+  outStreamA.Charset = 'windows-1252'; // important, see `cdoCharset Module Constants`
+  outStreamA.Open()
 
   outStreamW.CopyTo(outStreamA);      // convert encoding
 
-  outStreamA.SaveToFile(path, 2);
+  outStreamA.SaveToFile(path, 2)
 
-  outStreamW.Close();
-  outStreamA.Close();
+  outStreamW.Close()
+  outStreamA.Close()
 }
 
 function appendFile(path, content){
-  var fs   = new ActiveXObject('Scripting.FileSystemObject');
-  var file = fs.OpenTextFile(path, 8, true);
-  file.Write(content);
-  file.Close();
+  var fs   = new ActiveXObject('Scripting.FileSystemObject')
+  var file = fs.OpenTextFile(path, 8, true)
+  file.Write(content)
+  file.Close()
 }
 
 function deleteFile(path){
@@ -279,38 +279,38 @@ function copyFile(source, destination, overwrite){
 }
 
 function listFolders(path) {
-  var fs   = new ActiveXObject("Scripting.FileSystemObject");
-  var fc   = new Enumerator(fs.GetFolder(path).SubFolders);
-  var list = [];
+  var fs   = new ActiveXObject("Scripting.FileSystemObject")
+  var fc   = new Enumerator(fs.GetFolder(path).SubFolders)
+  var list = []
   for (; !fc.atEnd(); fc.moveNext()) {
-    list.push(fc.item());
+    list.push(fc.item())
   }
-  return list;
+  return list
 }
 
 function listFiles(path) {
-  var fs   = new ActiveXObject("Scripting.FileSystemObject");
-  var fc   = new Enumerator(fs.GetFolder(path).files);
-  var list = [];
+  var fs   = new ActiveXObject("Scripting.FileSystemObject")
+  var fc   = new Enumerator(fs.GetFolder(path).files)
+  var list = []
   for (; !fc.atEnd(); fc.moveNext()) {
-    list.push(fc.item());
+    list.push(fc.item())
   }
-  return list;
+  return list
 }
 
 function fileStartsWith(file, s) {
-  return file.Name.indexOf(s) == 0;
+  return file.Name.indexOf(s) == 0
 }
 
 function fileContains(file, s) {
-  return file.Name.indexOf(s) != -1;
+  return file.Name.indexOf(s) != -1
 }
 
 function createFolder (path) {
-  var fs = new ActiveXObject("Scripting.FileSystemObject");
+  var fs = new ActiveXObject("Scripting.FileSystemObject")
   if (!fs.FolderExists(path)) {
-    var current = path;
-    var foldersToCreate = [];
+    var current = path
+    var foldersToCreate = []
 
     while (!fs.FolderExists(current)) {
       foldersToCreate.push(current)
@@ -366,34 +366,34 @@ function unescapeXml(safe) {
 
 // returns decoded base64 binary data
 function atob(text) {
-  var xml = new ActiveXObject("MSXml2.DOMDocument");
-  var element = xml.createElement("Base64Data");
-  element.dataType = "bin.base64";
-  element.text = text;
-  return element.nodeTypedValue;
+  var xml = new ActiveXObject("MSXml2.DOMDocument")
+  var element = xml.createElement("Base64Data")
+  element.dataType = "bin.base64"
+  element.text = text
+  return element.nodeTypedValue
 }
 
 // returns base64 encoded text
 function btoa(binary) {
-  var xml = new ActiveXObject("MSXml2.DOMDocument");
-  var element = xml.createElement("Base64Data");
-  element.dataType = "bin.base64";
-  element.nodeTypedValue = binary;
-  return element.text;
+  var xml = new ActiveXObject("MSXml2.DOMDocument")
+  var element = xml.createElement("Base64Data")
+  element.dataType = "bin.base64"
+  element.nodeTypedValue = binary
+  return element.text
 }
 
 // decodes & writes base64 encoded text to file
 function writeDecodedBase64(text, to) {
-  var xml = new ActiveXObject("MSXml2.DOMDocument");
-  var element = xml.createElement("Base64Data");
-  element.dataType = "bin.base64";
-  element.text = text;
+  var xml = new ActiveXObject("MSXml2.DOMDocument")
+  var element = xml.createElement("Base64Data")
+  element.dataType = "bin.base64"
+  element.text = text
 
-  var outputStream = new ActiveXObject("ADODB.Stream");
-  outputStream.type = 1;
-  outputStream.open();
-  outputStream.write(element.nodeTypedValue);
-  outputStream.saveToFile(to, 2);
+  var outputStream = new ActiveXObject("ADODB.Stream")
+  outputStream.type = 1
+  outputStream.open()
+  outputStream.write(element.nodeTypedValue)
+  outputStream.saveToFile(to, 2)
 }
 
 
@@ -580,19 +580,19 @@ function httpPOST(url, data) {
 */
 function sendEmail(options) {
   // Setup configuration
-  var schema = "http://schemas.microsoft.com/cdo/configuration/";
+  var schema = 'http://schemas.microsoft.com/cdo/configuration/';
 
-  var config = new ActiveXObject("CDO.Configuration");
-  config.Fields.Item(schema + "sendusing") = options.sendUsing || 2;
-  config.Fields.Item(schema + "smtpserver") = options.server;
+  var config = new ActiveXObject('CDO.Configuration');
+  config.Fields.Item(schema + 'sendusing') = options.sendUsing || 2;
+  config.Fields.Item(schema + 'smtpserver') = options.server;
   if (options.port != undefined)
-    config.Fields.Item(schema + "smtpserverport") = options.port;
+    config.Fields.Item(schema + 'smtpserverport') = options.port;
   if (options.usessl != undefined)
-    config.Fields.Item(schema + "smtpusessl") = options.usessl;
+    config.Fields.Item(schema + 'smtpusessl') = options.usessl;
   if (options.username && options.password) {
-    config.Fields.Item(schema + "smtpauthenticate") = 1
-    config.Fields.Item(schema + "sendusername") = options.username;
-    config.Fields.Item(schema + "sendpassword") = options.password;
+    config.Fields.Item(schema + 'smtpauthenticate') = 1
+    config.Fields.Item(schema + 'sendusername') = options.username;
+    config.Fields.Item(schema + 'sendpassword') = options.password;
   }
   config.Fields.Update();
 
@@ -613,7 +613,7 @@ function sendEmail(options) {
   if (options.headers) {
     for (var key in options.headers) {
       var value = options.headers[key];
-      message.Fields("urn:schemas:mailheader:" + key) = value;
+      message.Fields('urn:schemas:mailheader:' + key) = value;
     }
   }
 
@@ -637,7 +637,7 @@ function sendEmail(options) {
 function sqlQuery(query, connectionString) {
   var adOpenDynamic = 2;
   var adLockOptimistic = 3;
-  var rs = new ActiveXObject("ADODB.Recordset");
+  var rs = new ActiveXObject('ADODB.Recordset');
   rs.open(query, connectionString, adOpenDynamic, adLockOptimistic);
 
   var res = [];
@@ -663,7 +663,7 @@ function sqlExecute(query, connectionString) {
   var adOpenForwardOnly = 0;
   var adLockReadOnly = 1;
   var adCmdText = 1;
-  var rs = new ActiveXObject("ADODB.Recordset");
+  var rs = new ActiveXObject('ADODB.Recordset');
   rs.open(query, connectionString, adOpenForwardOnly, adLockReadOnly, adCmdText);
 }
 
