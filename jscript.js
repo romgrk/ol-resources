@@ -472,11 +472,41 @@ function saveMetaAsXML(meta, path) {
   meta.Export(path, 0); // efXml21 = 0
 }
 
-function getMetaDocuments() {
+/*function getMetaDocuments() {
   var list = metalistToJS(loadMeta().job().group(0))
   for (var i = 0; i < list.length; i++)
     list[i] = metanodeToJS(list[i])
   return list
+}*/
+
+function getMetaDocuments() {
+  var meta = new ActiveXObject('MetadataLib.MetaFile')
+  meta.loadFromFile(Watch.GetMetadataFilename())
+
+  var records = []
+
+  for (var i = 0; i < meta.Job().Group(0).Count; i++) {
+    var doc = meta.Job().Group(0).Item(i);
+    var record = { __node__: doc }
+
+    for (var j = 0; j< doc.Fields.Count; j++) {
+      var key   = doc.Fields.Name(j).replace(/_vger_fld_|_vger_record/, '')
+      var value = doc.Fields.Item(j)
+      record[key] = value
+    }
+
+    for (var j = 0; j< doc.Attributes.Count; j++) {
+      var key   = '_' + doc.Attributes.Name(j)
+      var value = doc.Attributes.Item(j)
+      record[key] = value
+    }
+
+    records.push(record)
+  }
+
+  records.save = function() { meta.saveToFile(Watch.getMetadataFilename()) }
+
+  return records
 }
 
 
