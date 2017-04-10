@@ -479,6 +479,7 @@ function saveMetaAsXML(meta, path) {
   return list
 }*/
 
+
 function getMetaDocuments() {
   var meta = new ActiveXObject('MetadataLib.MetaFile')
   meta.loadFromFile(Watch.GetMetadataFilename())
@@ -487,7 +488,7 @@ function getMetaDocuments() {
 
   for (var i = 0; i < meta.Job().Group(0).Count; i++) {
     var doc = meta.Job().Group(0).Item(i);
-    var record = { __node__: doc }
+    var record = { __node__: doc, __attributes__: {} }
 
     for (var j = 0; j< doc.Fields.Count; j++) {
       var key   = doc.Fields.Name(j).replace(/_vger_fld_|_vger_record/, '')
@@ -496,19 +497,29 @@ function getMetaDocuments() {
     }
 
     for (var j = 0; j< doc.Attributes.Count; j++) {
-      var key   = '_' + doc.Attributes.Name(j)
+      var key   = doc.Attributes.Name(j)
       var value = doc.Attributes.Item(j)
-      record[key] = value
+      record.__attributes__[key] = value
     }
 
     records.push(record)
   }
 
-  records.save = function() { meta.saveToFile(Watch.getMetadataFilename()) }
+  records.save = function() {
+    for (var i in records) {
+      var record = records[i]
+      for (var key in record) {
+        if (key.indexOf('__') !== 0 && key !== '_id') {
+          var value = record[key]
+          record.__node__.fields.add('_vger_fld_' + key, value)
+        }
+      }
+    }
+    meta.saveToFile(Watch.getMetadataFilename())
+  }
 
   return records
 }
-
 
 
 /*
