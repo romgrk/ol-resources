@@ -1,58 +1,8 @@
 /*
  * rest.js
+ *
+ * Usage example in ./examples/rest_workflow.js
  */
-
-
-var paths = {
-    dataFile:     'c:/users/gregoirr/dev/docs/quote.json'
-  , dataMapper:   'c:/users/gregoirr/dev/docs/quote_json.OL-datamapper'
-  , template:     'c:/users/gregoirr/dev/docs/quote_pdf.OL-template'
-  , jobPreset:    'c:/users/gregoirr/dev/docs/generic.ol-jobpreset'
-  , outputPreset: 'c:/users/gregoirr/dev/docs/PDF.ol-outputpreset'
-}
-
-var api          = new RestAPI('ol-admin', 'secret')
-
-var ack          = api.files.serviceHandshake()
-log(ack)
-
-var fileId       = api.files.uploadDataFile('file', false, readFile(paths.dataFile))
-log(fileId)
-
-var dmId         = api.files.uploadDataMappingConfiguration('dm', false, readFile(paths.dataMapper))
-log(dmId)
-
-var templateId   = api.files.uploadDesignTemplate('template', false, readFile(paths.template))
-log(templateId)
-
-var jobId        = api.files.uploadJobCreationPreset('job', false, readFile(paths.jobPreset))
-log(jobId)
-
-var outputId     = api.files.uploadOutputCreationPreset('output', false, readFile(paths.outputPreset))
-log(outputId)
-
-var config = {
-  datamining:      { config: dmId, identifier: fileId },
-  contentcreation: { config: templateId },
-  jobcreation:     { config: jobId },
-  outputcreation:  { config: outputId, createOnly: false }
-}
-
-var operationId  = api.print.processAllInOne(config)
-log(operationId)
-
-var progress
-while (progress !== 'done') {
-  progress       = api.print.getProgressOfOperation(operationId)
-  log(progress)
-  sleep(100)
-}
-
-var res          = api.print.getResultOfOperationAsText(operationId)
-log(res)
-
-
-
 
 function RestAPI(username, password, base) {
   var base = base || 'http://localhost:9340'
@@ -431,157 +381,130 @@ function RestAPI(username, password, base) {
       return GET('/workflow/print/version')
     }
   }
-}
 
-
-// Merge objects
-function assign(target) {
-  'use strict';
-  var args = Array.prototype.slice.call(arguments, 1)
-  for (var i = 0; i < args.length; i++) {
-    var source = args[i]
-    if (typeof source == 'object') {
-      for (var key in source)
-        target[key] = source[key]
+  // Merge objects
+  function assign(target) {
+    'use strict';
+    var args = Array.prototype.slice.call(arguments, 1)
+    for (var i = 0; i < args.length; i++) {
+      var source = args[i]
+      if (typeof source == 'object') {
+        for (var key in source)
+          target[key] = source[key]
+      }
     }
-  }
-  return target
-}
-
-// Make an HTTP request
-function fetch(options) {
-  var xhr
-  var isAsync = false
-
-  try      { xhr = new ActiveXObject('MSXML2.ServerXMLHTTP') }
-  catch(e) { xhr = new XMLHttpRequest(); isAsync = true; }
-
-  var url    = options.url
-  var method = options.method || 'GET'
-  var isJSON = false
-
-  if (options.data && method === 'GET')
-    url += '?' + queryString(options.data)
-
-  if (isAsync)
-    xhr.responseType = 'arraybuffer'
-
-  xhr.open(method, url, isAsync)
-
-  log(method + ' ' + url)
-
-  if (options.headers) {
-    for (var name in options.headers) {
-      var value = options.headers[name]
-
-      log({name:name,value:value})
-
-      if (name === 'Content-Type' && value === 'application/json')
-        isJSON = true
-
-      xhr.setRequestHeader(name, value)
-    }
+    return target
   }
 
-  function send() {
-    if (isJSON && method === 'POST')
-      xhr.send(JSON.stringify(options.data))
-    else if (options.data && method === 'POST')
-      xhr.send(options.data)
-    else
-      xhr.send()
-  }
+  // Make an HTTP request
+  function fetch(options) {
+    var xhr
+    var isAsync = false
 
-  function getResult() {
-    var operationId = xhr.getResponseHeader('operationId')
-    var buffer      = isAsync ? xhr.response : xhr.responseText
+    try      { xhr = new ActiveXObject('MSXML2.ServerXMLHTTP') }
+    catch(e) { xhr = new XMLHttpRequest(); isAsync = true; }
 
-    if (xhr.status >= 300)
-      return { error: true, status: xhr.status, text: xhr.statusText, response: isAsync ? arraybufferToString(buffer) : buffer }
-    if (xhr.getResponseHeader('Content-Type') === 'application/json')
-      return JSON.parse(isAsync ? arraybufferToString(buffer) : buffer)
-    if (xhr.getResponseHeader('Content-Type') === 'application/octet-stream')
-      return buffer
-    if (operationId)
-      return operationId
+    var url    = options.url
+    var method = options.method || 'GET'
+    var isJSON = false
+
+    if (options.data && method === 'GET')
+      url += '?' + queryString(options.data)
+
     if (isAsync)
-      return arraybufferToString(buffer)
-    return buffer
-  }
+      xhr.responseType = 'arraybuffer'
 
+    xhr.open(method, url, isAsync)
 
-  if (isAsync) {
-    return new Promise(function(resolve, reject) {
-      xhr.onload  = function () { (xhr.status < 300) ? resolve(getResult()) : reject(getResult()) }
-      xhr.onerror = function () { reject(getResult()) }
+    log(method + ' ' + url)
+
+    if (options.headers) {
+      for (var name in options.headers) {
+        var value = options.headers[name]
+
+        log({name:name,value:value})
+
+        if (name === 'Content-Type' && value === 'application/json')
+          isJSON = true
+
+        xhr.setRequestHeader(name, value)
+      }
+    }
+
+    function send() {
+      if (isJSON && method === 'POST')
+        xhr.send(JSON.stringify(options.data))
+      else if (options.data && method === 'POST')
+        xhr.send(options.data)
+      else
+        xhr.send()
+    }
+
+    function getResult() {
+      var operationId = xhr.getResponseHeader('operationId')
+      var buffer      = isAsync ? xhr.response : xhr.responseText
+
+      if (xhr.status >= 300)
+        return { error: true, status: xhr.status, text: xhr.statusText, response: isAsync ? arraybufferToString(buffer) : buffer }
+      if (xhr.getResponseHeader('Content-Type') === 'application/json')
+        return JSON.parse(isAsync ? arraybufferToString(buffer) : buffer)
+      if (xhr.getResponseHeader('Content-Type') === 'application/octet-stream')
+        return buffer
+      if (operationId)
+        return operationId
+      if (isAsync)
+        return arraybufferToString(buffer)
+      return buffer
+    }
+
+    if (isAsync) {
+      return new Promise(function(resolve, reject) {
+        xhr.onload  = function () { (xhr.status < 300) ? resolve(getResult()) : reject(getResult()) }
+        xhr.onerror = function () { reject(getResult()) }
+        send()
+      })
+    } else {
       send()
-    })
-  } else {
-    send()
-    return getResult()
+      return getResult()
+    }
   }
-}
 
-// Converts arraybuffer to string
-function arraybufferToString(buf) {
-  return String.fromCharCode.apply(null, new Uint8Array(buf))
-}
-
-// Return base64 encoded text
-function base64(binary) {
-  try { return window.btoa(binary) } catch(err) {}
-  var xml = new ActiveXObject("MSXml2.DOMDocument")
-  var element = xml.createElement("Base64Data")
-  element.dataType = "bin.base64"
-  element.nodeTypedValue = typeof(binary) == 'string' ? stringToBinary(binary) : binary
-  return element.text
-}
-
-// Return the string as a binary type
-function stringToBinary(text, charSet) {
-  var stream = new ActiveXObject('ADODB.Stream')
-  stream.type = 2 // adTypeText
-  stream.charSet = charSet || 'us-ascii'
-  stream.open()
-  stream.writeText(text)
-  stream.position = 0
-  stream.type = 1 // adTypeBinary
-  stream.position = 0
-  return stream.read()
-}
-
-// Encode as application/x-www-form-urlencoded (see HTML specs)
-function queryString(params) {
-  var parts = []
-  for (var key in params) {
-    parts.push(key + '=' + encodeURIComponent(params[key]))
+  // Converts arraybuffer to string
+  function arraybufferToString(buf) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf))
   }
-  return parts.join('&')
+
+  // Return base64 encoded text
+  function base64(binary) {
+    try { return window.btoa(binary) } catch(err) {}
+    var xml = new ActiveXObject("MSXml2.DOMDocument")
+    var element = xml.createElement("Base64Data")
+    element.dataType = "bin.base64"
+    element.nodeTypedValue = typeof(binary) == 'string' ? stringToBinary(binary) : binary
+    return element.text
+  }
+
+  // Return the string as a binary type
+  function stringToBinary(text, charSet) {
+    var stream = new ActiveXObject('ADODB.Stream')
+    stream.type = 2 // adTypeText
+    stream.charSet = charSet || 'us-ascii'
+    stream.open()
+    stream.writeText(text)
+    stream.position = 0
+    stream.type = 1 // adTypeBinary
+    stream.position = 0
+    return stream.read()
+  }
+
+  // Encode as application/x-www-form-urlencoded (see HTML specs)
+  function queryString(params) {
+    var parts = []
+    for (var key in params) {
+      parts.push(key + '=' + encodeURIComponent(params[key]))
+    }
+    return parts.join('&')
+  }
+
+  function log(msg) { try { Watch.log(JSON.stringify(msg), 2); } catch (e) { try { WScript.stdout.WriteLine(''+msg) } catch (e) { console.log(msg) } } }
 }
-
-// Sleep for @ms milliseconds
-function sleep(ms) {
-  var start = +new Date
-  while (+new Date - start < ms);
-}
-
-/*
- * Utilities
- */
-
-// Read file content
-function readFile(path){
-  var fs = new ActiveXObject("Scripting.FileSystemObject");
-  var file = fs.OpenTextFile(path, 1, true);
-  var res = file.ReadAll();
-  file.Close();
-  return res;
-}
-
-function get(name) { return Watch.getVariable(name); }
-function set(name, value) { Watch.setVariable(name, value); }
-function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
-function err(msg) { try { Watch.log(toString(msg), 1) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
-function exp(string) { return Watch.expandString(string); }
-function xml(string) { return Watch.expandString("xmlget('/request[1]/values[1]/" + string + "[1]',Value,KeepCase,No Trim)"); }
-function toString(value) { try { return JSON.stringify(value) } catch(e) { return ''+value } }
