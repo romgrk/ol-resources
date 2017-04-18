@@ -275,7 +275,7 @@ function RestAPI(username, password, base) {
     },
     processContentCreation: function (templateId, dataRecordId, section, inline) {
       var q = queryString({ section: section, inline: inline || 'ALL' })
-      return GET('/workflow/contentcreation/html/' + templateId + '/' + dataRecordId)
+      return GET('/workflow/contentcreation/html/' + templateId + '/' + dataRecordId + '?' + q)
     },
     processContentCreationJSON: function (templateId, dataRecordId) {
       return POST('/workflow/contentcreation/html/' + templateId + '/' + dataRecordId)
@@ -564,14 +564,6 @@ function sleep(ms) {
   var start = +new Date
   while (+new Date - start < ms);
 }
-
-// Resolve in @ms milliseconds
-function delay(ms) {
-  return new Promise(function(resolve) {
-    setTimeout(resolve, ms)
-  })
-}
-
 
 /*
  * Utilities
