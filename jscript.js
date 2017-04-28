@@ -799,13 +799,16 @@ function debug(msg, indent) {
 }
 */
 
+function escapeChars(value) {
+  return value.replace(/\n|\t|\r/g, function(c){ return { '\r': '\\r', '\n': '\\n', '\t': '\\t' }[c] })
+}
 function fmt(msg, indent) {
   indent = indent || '';
   var c = function (n) { return function (s) { return '\x1b[' + n + 'm' + s + '\x1b[0m' } }
   var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94'), grey = c('90'), brown = c('38;5;94');
   if (typeof msg == 'number')  return yellow(msg)
   if (typeof msg == 'boolean') return yellow(msg)
-  if (typeof msg == 'string')  return green('"' + msg + '"')
+  if (typeof msg == 'string')  return green('"' + escapeChars(msg) + '"')
   if (msg === null)      return red('null')
   if (msg === undefined) return red('undefined')
   if (msg.constructor == Array) {
