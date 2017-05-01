@@ -401,6 +401,67 @@ function writeDecodedBase64(text, to) {
 /*
  * MetaData API
  */
+
+/**
+ * @returns {Array} an array of metadata objects.
+ * Usage:
+ *
+ *  var docs = getMetaDocuments()
+ *
+ *  docs[0].MyMetadataField = 'some value'
+ *
+ *  // Attributes are exposed under .__attributes__
+ *  log(docs[0].__atributes__)
+ *
+ *  // And the native metadata object is exposed under .__node__
+ *  var invoiceDate = docs[0].__node__.FieldByName('_vger_fld_InvoiceDate')
+ *
+ *  // This saves any modification made to the JS object properties
+ *  docs.save()
+ */
+function getMetaDocuments() {
+  var meta = new ActiveXObject('MetadataLib.MetaFile')
+  meta.loadFromFile(Watch.GetMetadataFilename())
+
+  var records = []
+
+  for (var i = 0; i < meta.Job().Group(0).Count; i++) {
+    var doc = meta.Job().Group(0).Item(i);
+    var record = { __node__: doc, __attributes__: {} }
+
+    for (var j = 0; j< doc.Fields.Count; j++) {
+      var key   = doc.Fields.Name(j).replace(/_vger_fld_|_vger_record/, '')
+      var value = doc.Fields.Item(j)
+      record[key] = value
+    }
+
+    for (var j = 0; j< doc.Attributes.Count; j++) {
+      var key   = doc.Attributes.Name(j)
+      var value = doc.Attributes.Item(j)
+      record.__attributes__[key] = value
+    }
+
+    records.push(record)
+  }
+
+  records.save = function() {
+    for (var i in records) {
+      var record = records[i]
+      for (var key in record) {
+        if (key.indexOf('__') !== 0 && key !== '_id') {
+          var value = record[key]
+          record.__node__.fields.add('_vger_fld_' + key, value)
+        }
+      }
+    }
+    meta.saveToFile(Watch.getMetadataFilename())
+  }
+
+  return records
+}
+
+// Previous functions (use getMetaDocuments() above)
+
 /*
 
   var meta   = loadMeta()
@@ -479,47 +540,6 @@ function saveMetaAsXML(meta, path) {
   return list
 }*/
 
-
-function getMetaDocuments() {
-  var meta = new ActiveXObject('MetadataLib.MetaFile')
-  meta.loadFromFile(Watch.GetMetadataFilename())
-
-  var records = []
-
-  for (var i = 0; i < meta.Job().Group(0).Count; i++) {
-    var doc = meta.Job().Group(0).Item(i);
-    var record = { __node__: doc, __attributes__: {} }
-
-    for (var j = 0; j< doc.Fields.Count; j++) {
-      var key   = doc.Fields.Name(j).replace(/_vger_fld_|_vger_record/, '')
-      var value = doc.Fields.Item(j)
-      record[key] = value
-    }
-
-    for (var j = 0; j< doc.Attributes.Count; j++) {
-      var key   = doc.Attributes.Name(j)
-      var value = doc.Attributes.Item(j)
-      record.__attributes__[key] = value
-    }
-
-    records.push(record)
-  }
-
-  records.save = function() {
-    for (var i in records) {
-      var record = records[i]
-      for (var key in record) {
-        if (key.indexOf('__') !== 0 && key !== '_id') {
-          var value = record[key]
-          record.__node__.fields.add('_vger_fld_' + key, value)
-        }
-      }
-    }
-    meta.saveToFile(Watch.getMetadataFilename())
-  }
-
-  return records
-}
 
 
 /*
