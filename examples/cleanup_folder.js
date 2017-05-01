@@ -1,14 +1,21 @@
 /*
  * cleanup-folder.js
- * */ 'use strict'; extendArray() /*
+ * Delete files that are older than a certain number of days.
  */
 
+'use strict';
 
+extendArray()
+
+
+// Set the maximum age here, in number of days.
 var MAX_AGE = 30 /* days */
 
+// Set the list of folders that must be cleaned here.
 var folders = [
   'c:/users/gregoirr/tmp/tmp'
 ]
+
 
 
 folders.forEach(function(folder) {
@@ -21,9 +28,9 @@ folders.forEach(function(folder) {
 
 
 function olderThan(days, date) {
-  log(date)
   return (new Date().getTime() - new Date(date).getTime()) > (1000 * 3600 * 24 * days)
 }
+
 
 
 
