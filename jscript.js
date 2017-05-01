@@ -445,7 +445,7 @@ function getMetaDocuments() {
   }
 
   records.save = function() {
-    for (var i in records) {
+    for (var i = 0; i < records.length; i++) {
       var record = records[i]
       for (var key in record) {
         if (key.indexOf('__') !== 0 && key !== '_id') {
