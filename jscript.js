@@ -295,20 +295,19 @@ function writeDecodedBase64(text, to) {
 
 /**
  * @returns {Array} an array of metadata objects.
- * Usage:
+ * @example
  *
  *  var docs = getMetaDocuments()
  *
  *  docs[0].MyMetadataField = 'some value'
+ *  // This saves any modification made to the JS object properties
+ *  docs.save()
  *
  *  // Attributes are exposed under .__attributes__
- *  log(docs[0].__atributes__)
+ *  log(docs[0].__attributes__)
  *
  *  // And the native metadata object is exposed under .__node__
  *  var invoiceDate = docs[0].__node__.FieldByName('_vger_fld_InvoiceDate')
- *
- *  // This saves any modification made to the JS object properties
- *  docs.save()
  */
 function getMetaDocuments() {
   var meta = new ActiveXObject('MetadataLib.MetaFile')
@@ -335,6 +334,7 @@ function getMetaDocuments() {
     records.push(record)
   }
 
+  records.__meta__ = meta
   records.save = function() {
     for (var i = 0; i < records.length; i++) {
       var record = records[i]
@@ -351,22 +351,7 @@ function getMetaDocuments() {
   return records
 }
 
-// Previous functions (use getMetaDocuments() above)
 
-/*
-
-  var meta   = loadMeta()
-  var group  = metalistToJS(meta.job().group(0))
-  var docs   = map(group, metanodeToJS)
-
-  // Metadata available as field of docs, e.g.
-  // docs[0].CustomerID
-
-  log(docs)
-
-  saveMetaAsXML(meta, 'C:/Users/gregoirr/Desktop/meta.xml')
-
-*/
 
 function metalistToJS(list) {
   var array = [];
@@ -409,7 +394,6 @@ function metanodeToJS(node) {
   return object;
 }
 
-
 function loadMeta() {
   var meta = new ActiveXObject('MetadataLib.MetaFile');
   meta.loadFromFile(Watch.getMetadataFilename());
@@ -424,18 +408,85 @@ function saveMetaAsXML(meta, path) {
   meta.Export(path, 0); // efXml21 = 0
 }
 
-/*function getMetaDocuments() {
-  var list = metalistToJS(loadMeta().job().group(0))
-  for (var i = 0; i < list.length; i++)
-    list[i] = metanodeToJS(list[i])
-  return list
-}*/
 
 
 
 /*
  * Network
  */
+
+/** Sends an email.
+ * @param options {Object} message options
+ * @example
+
+  var message = {
+    server:         'smtp.office365.com',
+    port:           25, // Don't include the port if you are targeting office365
+    username:       'docrequest@lordco.com',
+    password:       'secret',
+    usessl:         true, // Set to true if you are targeting office365
+    headers:        { 'X-Custom': 'value' }
+    from:           'docrequest@lordco.com',
+    to:             'gregoirer@ca.objectiflune.com',
+    isHighPriority: true,
+    attachments:    ['c:/absolute/path/to/filename.txt'],
+    subject:        'Statement',
+    body:           '<b>Yo</b><br>This is a new statement'
+  }
+
+  sendEmail(message);
+*/
+function sendEmail(options) {
+  // Setup configuration
+  var schema = 'http://schemas.microsoft.com/cdo/configuration/';
+
+  var config = new ActiveXObject('CDO.Configuration');
+  config.Fields.Item(schema + 'sendusing') = options.sendUsing || 2;
+  config.Fields.Item(schema + 'smtpserver') = options.server;
+  if (options.port != undefined)
+    config.Fields.Item(schema + 'smtpserverport') = options.port;
+  if (options.usessl != undefined)
+    config.Fields.Item(schema + 'smtpusessl') = options.usessl;
+  if (options.username && options.password) {
+    config.Fields.Item(schema + 'smtpauthenticate') = 1
+    config.Fields.Item(schema + 'sendusername') = options.username;
+    config.Fields.Item(schema + 'sendpassword') = options.password;
+  }
+  config.Fields.Update();
+
+  // Setup message
+  var message = new ActiveXObject("CDO.Message");
+  message.Configuration = config;
+  message.From          = options.from;
+  message.To            = options.to;
+  message.Subject       = options.subject;
+  message.HTMLBody      = options.body;
+
+  if (options.isHighPriority) {
+    /* 0 = Low, 1 = Normal, 2 = High */
+    message.Fields.Item('urn:schemas:mailheader:X-MSMail-Priority') = 'High'
+    message.Fields.Item('urn:schemas:mailheader:X-Priority') = 2
+    message.Fields.Item('urn:schemas:httpmail:importance') = 2
+  }
+
+  if (options.headers) {
+    for (var key in options.headers) {
+      var value = options.headers[key];
+      message.Fields('urn:schemas:mailheader:' + key) = value;
+    }
+  }
+
+  if (options.attachments) {
+    for (var k in options.attachments) {
+      var attachment = options.attachments[k];
+      message.AddAttachment(attachment);
+    }
+  }
+
+  message.Fields.Update();
+  message.Send();
+}
+
 
 // Make an HTTP request
 function fetch(options, callback) {
@@ -510,78 +561,6 @@ function httpPOST(url, data) {
   return http;
 }
 
-
-/** Sends an email.
- * @param options {Object} message options
- * @example
-
-  var message = {
-    server:         'smtp.office365.com',
-    port:           25, // Don't include the port if you are targeting office365
-    username:       'docrequest@lordco.com',
-    password:       'secret',
-    usessl:         true, // Set to true if you are targeting office365
-    headers:        { 'X-Custom': 'value' }
-    from:           'docrequest@lordco.com',
-    to:             'gregoirer@ca.objectiflune.com',
-    isHighPriority: true,
-    attachments:    ['c:/absolute/path/to/filename.txt'],
-    subject:        'Statement',
-    body:           '<b>Yo</b><br>This is a new statement'
-  }
-
-  sendEmail(message);
-*/
-function sendEmail(options) {
-  // Setup configuration
-  var schema = 'http://schemas.microsoft.com/cdo/configuration/';
-
-  var config = new ActiveXObject('CDO.Configuration');
-  config.Fields.Item(schema + 'sendusing') = options.sendUsing || 2;
-  config.Fields.Item(schema + 'smtpserver') = options.server;
-  if (options.port != undefined)
-    config.Fields.Item(schema + 'smtpserverport') = options.port;
-  if (options.usessl != undefined)
-    config.Fields.Item(schema + 'smtpusessl') = options.usessl;
-  if (options.username && options.password) {
-    config.Fields.Item(schema + 'smtpauthenticate') = 1
-    config.Fields.Item(schema + 'sendusername') = options.username;
-    config.Fields.Item(schema + 'sendpassword') = options.password;
-  }
-  config.Fields.Update();
-
-  // Setup message
-  var message = new ActiveXObject("CDO.Message");
-  message.Configuration = config;
-  message.From          = options.from;
-  message.To            = options.to;
-  message.Subject       = options.subject;
-  message.HTMLBody      = options.body;
-
-  if (options.isHighPriority) {
-    /* 0 = Low, 1 = Normal, 2 = High */
-    message.Fields.Item('urn:schemas:mailheader:X-MSMail-Priority') = 'High'
-    message.Fields.Item('urn:schemas:mailheader:X-Priority') = 2
-    message.Fields.Item('urn:schemas:httpmail:importance') = 2
-  }
-
-  if (options.headers) {
-    for (var key in options.headers) {
-      var value = options.headers[key];
-      message.Fields('urn:schemas:mailheader:' + key) = value;
-    }
-  }
-
-  if (options.attachments) {
-    for (var k in options.attachments) {
-      var attachment = options.attachments[k];
-      message.AddAttachment(attachment);
-    }
-  }
-
-  message.Fields.Update();
-  message.Send();
-}
 
 
 
@@ -689,29 +668,11 @@ function execCommand(cmd, cwd) {
 }
 
 
+
+
 /*
- * Logging
+ * Logging (in cscript.exe mode)
  */
-
-
-/*
-function debug(msg, indent) {
-  var c = function (n) { return function (s) { return '\x1b[' + n + 'm' + s + '\x1b[0m' } }
-  var red = c('91'), green = c('92'), yellow = c('93'), blue = c('94');
-  indent = indent || '';
-  if (typeof msg == 'number')  return log(yellow(msg))
-  if (typeof msg == 'boolean') return log(yellow(msg))
-  if (typeof msg == 'string')  return log(green('"' + msg + '"'))
-  for (var i in msg) {
-    if (typeof msg[i] == 'object') {
-      log(indent + yellow(i) + ':');
-      debug(msg[i], indent + '  ')
-    } else {
-      log(indent + yellow(i) + ':' + msg[i]);
-    }
-  }
-}
-*/
 
 function escapeChars(value) {
   return value.replace(/\n|\t|\r/g, function(c){ return { '\r': '\\r', '\n': '\\n', '\t': '\\t' }[c] })
