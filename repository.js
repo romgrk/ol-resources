@@ -5,22 +5,9 @@
 
 
 /*
- * Execution
+ * Example:
+ * (see function getRepository() below)
  */
-
-var get, set, log, err, exp;
-get = function (name) { return Watch.getVariable(name); }
-set = function (name, value) { Watch.setVariable(name, value); }
-log = function (msg) { Watch.log(toString(msg), 2); }
-err = function (msg) { Watch.log(toString(msg), 1); }
-exp = function (string) { return Watch.expandString(string); }
-
-function toString(value) {
-  if (typeof value == 'function') return value.toString()
-  if (typeof value == 'string')   return value;
-  return JSON.stringify(value)
-}
-
 
 
 var repo  = getRepository()
@@ -66,6 +53,7 @@ log(users.findAll())
 
 repo.renameGroup('users', 'persons')
 repo.removeGroup('persons')
+
 log(repo.listGroups()) // => []
 
 
@@ -73,7 +61,6 @@ log(repo.listGroups()) // => []
 /*
  * Repository API
  */
-
 
 function getRepository() {
   var repo = new ActiveXObject('RepositoryLib.WorkflowRepository');
@@ -207,5 +194,15 @@ function getRepository() {
 
   return new Repository()
 }
+
+
+function get(name) { return Watch.getVariable(name); }
+function set(name, value) { Watch.setVariable(name, value); }
+function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
+function err(msg) { try { Watch.log(toString(msg), 1) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
+function exp(string) { return Watch.expandString(string); }
+function xml(string) { return Watch.expandString("xmlget('/request[1]/values[1]/" + string + "[1]',Value,KeepCase,No Trim)"); }
+function toString(value) { try { return JSON.stringify(value) } catch(e) { return ''+value } }
+
 
 
