@@ -669,6 +669,18 @@ function execCommand(cmd, cwd) {
 
 
 
+/*
+ * Functional
+ */
+
+function not(fn) {
+  return function() {
+    return !fn.apply(null, [].slice.call(arguments))
+  }
+}
+
+
+
 
 /*
  * Logging (in cscript.exe mode)
