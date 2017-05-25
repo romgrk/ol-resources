@@ -15,6 +15,11 @@ function exp(string) { return Watch.expandString(string); }
 function xml(string) { return Watch.expandString("xmlget('/request[1]/values[1]/" + string + "[1]',Value,KeepCase,No Trim)"); }
 function toString(value) { try { return JSON.stringify(value) } catch(e) { return ''+value } }
 
+function format() {
+  var as = arguments
+  return as[0].replace(/\{ *(\w+) *}/g,
+    function(m, i) { return as[i] })
+}
 
 
 /*
@@ -27,7 +32,6 @@ function toString(value) { try { return JSON.stringify(value) } catch(e) { retur
  */
 
 function assign(target) {
-  'use strict';
   var args = Array.prototype.slice.call(arguments, 1)
   for (var i = 0; i < args.length; i++) {
     var source = args[i]
