@@ -197,6 +197,16 @@ function fileContains(file, s) {
   return file.Name.indexOf(s) != -1
 }
 
+function fileExists(path) {
+  var fs = new ActiveXObject("Scripting.FileSystemObject")
+  return fs.FileExists(path)
+}
+
+function folderExists(path) {
+  var fs = new ActiveXObject("Scripting.FileSystemObject")
+  return fs.FileExists(path)
+}
+
 function createFolder (path) {
   var fs = new ActiveXObject("Scripting.FileSystemObject")
   if (!fs.FolderExists(path)) {
@@ -605,6 +615,18 @@ function escapeSql(val) {
   return "'" + val.replace(/'/g, "''") + "'";
 }
 
+function interpolate(query, record) {
+  return query.replace(/\{ *(\w+)(?: *, *(\w+))?\ *}/g, function(m, key, type) {
+    if (record[key] == null)
+      return 'NULL'
+    switch (type || 'string') {
+      case 'string': return escapeSql(record[key])
+      case 'number': return parseNumber(record[key])
+      //case 'date':   return 'CONVERT(datetime, ' + escapeSql(record[key]) + ', 1)'
+      default:       return record[key]
+    }
+  })
+}
 
 
 /*
