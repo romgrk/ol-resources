@@ -234,6 +234,9 @@ function join() {
   return Array.prototype.slice.call(arguments, 0).join('\\')
 }
 
+function sanitizeFilename(filename) {
+  return filename.replace(/\/|\\|:|\?|\*|"|\||<|>/g, '-')
+}
 
 /*
  * XML
