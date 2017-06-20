@@ -55,7 +55,18 @@ doc = ie.document
 var selectSize    = doc.querySelector('#ctl00_PlaceHolderMain_ddlListPageSize')
 
 selectSize.value = '500'
-selectSize.onchange()
+try {
+  selectSize.onchange()
+} catch(e) {
+  if ('createEvent' in doc) {
+    var evt = doc.createEvent('HTMLEvents')
+    evt.initEvent('change', false, true)
+    selectSize.dispatchEvent(evt)
+  } else {
+    selectSize.fireEvent('onchange')
+  }
+}
+
 
 while (ie.busy) { }
 while (ie.busy) { }
