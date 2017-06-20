@@ -696,6 +696,10 @@ function execCommand(cmd, cwd) {
   return handle.stdOut.readAll()
 }
 
+function sleep(seconds) {
+  new ActiveXObject('wscript.Shell').Run('%COMSPEC% /c ping -n ' + seconds + ' 127.0.0.1>nul', 0, 1)
+}
+
 
 
 /*
