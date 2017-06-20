@@ -7,8 +7,8 @@
 'use strict';
 
 
-function get(name) { return Watch.getVariable(name); }
-function set(name, value) { Watch.setVariable(name, value); }
+function get(name) { return typeof name === 'number' ? Watch.getJobInfo(name) : Watch.getVariable(name) }
+function set(name, value) { typeof name === 'number' ? Watch.setJobInfo(name, value) : Watch.setVariable(name, value) }
 function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
 function err(msg) { try { Watch.log(toString(msg), 1) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
 function exp(string) { return Watch.expandString(string); }
