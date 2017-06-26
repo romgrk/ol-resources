@@ -112,6 +112,16 @@ function writeFile(path, content){
   file.Close()
 }
 
+function writeFileWithEncoding(path, content, encoding) {
+  var stream = new ActiveXObject('ADODB.Stream')
+  stream.type = 2 // adTypeText
+  stream.charSet = encoding || 'utf-8'
+  stream.open()
+  stream.writeText(content)
+  stream.saveToFile(path, 2) // adSaveCreateOverwrite
+  stream.close()
+}
+
 function readBinaryFile(path) {
   var binStream = new ActiveXObject('ADODB.Stream')
   binStream.Type = 1 //adTypeBinary
