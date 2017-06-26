@@ -17,7 +17,7 @@ function toString(value) { try { return JSON.stringify(value) } catch(e) { retur
 
 function format() {
   var as = arguments
-  return as[0].replace(/\{ *(\w+) *}/g,
+  return as[0].replace(/\{ *(\w+) *\}/g,
     function(m, i) { return as[i] })
 }
 
