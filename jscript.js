@@ -170,7 +170,8 @@ function appendFile(path, content){
 
 function deleteFile(path){
   var fs = new ActiveXObject('Scripting.FileSystemObject')
-  fs.deleteFile(path)
+  if (fs.fileExists(path))
+    fs.deleteFile(path)
 }
 
 function moveFile(source, destination){
