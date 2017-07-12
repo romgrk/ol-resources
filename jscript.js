@@ -7,6 +7,10 @@
 'use strict';
 
 
+/*
+ * Helpers
+ */
+
 function get(name) { return typeof name === 'number' ? Watch.getJobInfo(name) : Watch.getVariable(name) }
 function set(name, value) { typeof name === 'number' ? Watch.setJobInfo(name, value) : Watch.setVariable(name, value) }
 function log(msg) { try { Watch.log(toString(msg), 2) } catch(e) { WScript.stdout.WriteLine(toString(msg)) } }
@@ -241,7 +245,6 @@ function createFolder (path) {
 
 
 function join() {
-  'use strict';
   return Array.prototype.slice.call(arguments, 0).join('\\')
 }
 
@@ -637,7 +640,7 @@ function interpolate(query, record) {
   return query.replace(/\{ *(\w+)(?: *, *(\w+))?\ *}/g, function(m, key, type) {
     if (record[key] == null)
       return 'NULL'
-    switch (type || 'string') {
+    switch (type) {
       case 'string': return escapeSql(record[key])
       case 'number': return parseNumber(record[key])
       //case 'date':   return 'CONVERT(datetime, ' + escapeSql(record[key]) + ', 1)'
