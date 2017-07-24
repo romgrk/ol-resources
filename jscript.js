@@ -647,7 +647,7 @@ function trim(string) {
 
 function runCommand(cmd) {
   var shell = new ActiveXObject('WScript.Shell')
-  return shell.run('cmd /c ' + cmd, 0, true)
+  return shell.run('%COMSPEC% /c ' + cmd, 0, true)
 }
 
 function execCommand(cmd, cwd) {
@@ -660,7 +660,8 @@ function execCommand(cmd, cwd) {
 }
 
 function sleep(seconds) {
-  new ActiveXObject('wscript.Shell').Run('%COMSPEC% /c ping -n ' + seconds + ' 127.0.0.1>nul', 0, 1)
+  new ActiveXObject('WScript.Shell')
+    .run('%COMSPEC% /c ping -n ' + (seconds + 1) + ' 127.0.0.1>nul', 0, true)
 }
 
 
