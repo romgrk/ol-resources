@@ -331,20 +331,23 @@ function writeDecodedBase64(text, to) {
  *  var docs = getMetaDocuments()
  *
  *  docs[0].MyMetadataField = 'some value'
+ *
  *  // This saves any modification made to the JS object properties
  *  docs.save()
  *
- *  // Attributes are exposed under .__attributes__
- *  log(docs[0].__attributes__)
+ *  // This saves the metadata as XML
+ *  docs.saveAsXML('c:/users/gregoirr/tmp/out.xml')
  *
+ *  // Attributes are exposed under .__attributes__
  *  // And the native metadata object is exposed under .__node__
- *  var invoiceDate = docs[0].__node__.FieldByName('_vger_fld_InvoiceDate')
+ *  var myMetadataField = docs[0].__node__.FieldByName('_vger_fld_MyMetadataField')
  */
-function getMetaDocuments() {
+function getMetaDocuments(filename) {
   var meta = new ActiveXObject('MetadataLib.MetaFile')
-  meta.loadFromFile(Watch.GetMetadataFilename())
+  meta.loadFromFile(filename || Watch.GetMetadataFilename())
 
   var records = []
+  records.__meta__ = meta
 
   for (var i = 0; i < meta.Job().Group(0).Count; i++) {
     var doc = meta.Job().Group(0).Item(i);
@@ -365,7 +368,6 @@ function getMetaDocuments() {
     records.push(record)
   }
 
-  records.__meta__ = meta
   records.save = function() {
     for (var i = 0; i < records.length; i++) {
       var record = records[i]
@@ -379,64 +381,11 @@ function getMetaDocuments() {
     meta.saveToFile(Watch.getMetadataFilename())
   }
 
+  records.saveAsXML = function(path) {
+    meta.Export(path, 0) // efXml21 = 0
+  }
+
   return records
-}
-
-
-
-function metalistToJS(list) {
-  var array = [];
-  for (var i = 0; i < list.count; i++) {
-    array.push(list.item(i))
-  }
-  return array;
-}
-
-function metacollectionToJS(collection) {
-  var object = {};
-  for (var i = 0; i < collection.count; i++) {
-    var key   = collection.name(i)
-    var value = collection.item(i)
-    object[key] = value
-  }
-  return object;
-}
-
-function metanodeToJS(node) {
-  var object = {
-    __node__: node
-  };
-
-  var fields     = node.fields;
-  var attributes = node.attributes;
-
-  for (var i = 0; i < fields.count; i++) {
-    var key   = fields.name(i).replace(/_vger_fld_|_vger_record/, '')
-    var value = fields.item(i)
-    object[key] = value
-  }
-
-  for (var i = 0; i < attributes.count; i++) {
-    var key   = '_' + attributes.name(i)
-    var value = attributes.item(i)
-    object[key] = value
-  }
-
-  return object;
-}
-
-function loadMeta() {
-  var meta = new ActiveXObject('MetadataLib.MetaFile');
-  meta.loadFromFile(Watch.getMetadataFilename());
-  return meta;
-}
-
-function saveMeta(meta) {
-  meta.saveToFile(Watch.getMetadataFilename());
-}
-
-function saveMetaAsXML(meta, path) {
-  meta.Export(path, 0); // efXml21 = 0
 }
 
 
