@@ -287,8 +287,14 @@ const capturePath = (options = {}) => {
 
     var data = options.edit || '';
 
-    const getCoords = ev =>
-      ev.offsetX + ',' + ev.offsetY
+    const getCoords = ev => {
+      if (!ev.touches)
+        return ev.offsetX + ',' + ev.offsetY
+      const rect = ev.target.getBoundingClientRect()
+      const x = ev.targetTouches[0].pageX - rect.left
+      const y = ev.targetTouches[0].pageY - rect.top
+      return x + ',' + y
+    }
 
     const onMouseDown = ev => {
       data += 'M' + getCoords(ev) + ' ';
