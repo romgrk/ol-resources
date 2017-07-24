@@ -587,11 +587,13 @@ function escapeSql(val) {
 
 function interpolate(query, record) {
   return query.replace(/\{ *(\w+)(?: *, *(\w+))?\ *}/g, function(m, key, type) {
+    if (!(key in record))
+      throw new Error('Key "' + key + '" not present in provided record: ' + JSON.stringify(record))
     if (record[key] == null)
       return 'NULL'
     switch (type) {
       case 'string': return escapeSql(record[key])
-      case 'number': return parseNumber(record[key])
+      case 'number': return record[key]
       //case 'date':   return 'CONVERT(datetime, ' + escapeSql(record[key]) + ', 1)'
       default:       return record[key]
     }
