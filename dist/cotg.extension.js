@@ -295,8 +295,8 @@
 			var getCoords = function getCoords(ev) {
 				if (!ev.touches) return ev.offsetX + ',' + ev.offsetY;
 				var rect = ev.target.getBoundingClientRect();
-				var x = ev.targetTouches[0].pageX - rect.left;
-				var y = ev.targetTouches[0].pageY - rect.top;
+				var x = ev.targetTouches[0].clientX - rect.left;
+				var y = ev.targetTouches[0].clientY - rect.top;
 				return x + ',' + y;
 			};
 
@@ -308,7 +308,7 @@
 			};
 
 			var onMouseMove = function onMouseMove(ev) {
-				if (ev.buttons & 1) {
+				if (ev.buttons & 1 || ev.type === 'touchmove') {
 					data += 'L' + getCoords(ev) + ' ';
 					path.setAttribute('d', data);
 				}

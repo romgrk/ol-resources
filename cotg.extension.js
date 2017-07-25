@@ -291,8 +291,8 @@ const capturePath = (options = {}) => {
       if (!ev.touches)
         return ev.offsetX + ',' + ev.offsetY
       const rect = ev.target.getBoundingClientRect()
-      const x = ev.targetTouches[0].pageX - rect.left
-      const y = ev.targetTouches[0].pageY - rect.top
+      const x = ev.targetTouches[0].clientX - rect.left
+      const y = ev.targetTouches[0].clientY - rect.top
       return x + ',' + y
     }
 
@@ -304,7 +304,7 @@ const capturePath = (options = {}) => {
     }
 
     const onMouseMove = ev => {
-      if (ev.buttons & 1) {
+      if (ev.buttons & 1 || ev.type === 'touchmove') {
         data += 'L' + getCoords(ev) + ' ';
         path.setAttribute('d', data);
       }
