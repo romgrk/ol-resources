@@ -26,76 +26,6 @@ function format() {
 }
 
 
-/*
- * Array: see ./array.js
- */
-
-
-/*
- * Object
- */
-
-function assign(target) {
-  var args = Array.prototype.slice.call(arguments, 1)
-  for (var i = 0; i < args.length; i++) {
-    var source = args[i]
-    for (var key in source) {
-      target[key] = source[key]
-    }
-  }
-  return target
-}
-
-function keys(object) {
-  var keys = []
-  for (var key in object)
-    keys.push(key)
-  return keys
-}
-
-function values(object) {
-  var values = []
-  for (var key in object)
-    values.push(object[key])
-  return values
-}
-
-function entries(object) {
-  var entries = []
-  for (var key in object)
-    entries.push([key, object[key]])
-  return entries
-}
-
-
-
-/*
- * Binary
- */
-
-function binaryToString(binary) {
-  var rs = new ActiveXObject("ADODB.Recordset");
-  rs.fields.append("mBinary", 201, 1024, 0x80); // adLongVarChar
-  rs.open();
-  rs.addNew();
-  rs("mBinary").appendChunk(binary);
-  rs.update();
-  return rs("mBinary").value;
-}
-
-function stringToBinary(text, charSet) {
-  var stream = new ActiveXObject('ADODB.Stream')
-  stream.type = 2 // adTypeText
-  stream.charSet = charSet || 'us-ascii'
-  stream.open()
-  stream.writeText(text)
-  stream.position = 0
-  stream.type = 1 // adTypeBinary
-  stream.position = 0
-  return stream.read()
-}
-
-
 
 /*
  * File utilities
@@ -252,32 +182,95 @@ function sanitizeFilename(filename) {
   return filename.replace(/\/|\\|:|\?|\*|"|\||<|>/g, '-')
 }
 
+
+
 /*
- * XML
+ * XML (requires Array polyfill, see ./array.js)
  */
 
-function escapeXml(unsafe) {
-  return unsafe.replace(/[<>&'"]/g, function (c) {
-    switch (c) {
-      case '<':  return '&lt;';
-      case '>':  return '&gt;';
-      case '&':  return '&amp;';
-      case '\'': return '&apos;';
-      case '"':  return '&quot;';
-    }
-  });
+function loadXML(filename) {
+  var xmlDoc = new ActiveXObject('Msxml2.DOMDocument.6.0')
+  xmlDoc.async = false
+  xmlDoc.load(filename)
+  if (xmlDoc.parseError.errorCode != 0)
+    throw new Error('XML error: ' + xmlDoc.parseError.reason + '; Source: ' + xmlDoc.parseError.srcText)
+  return xmlDoc
 }
 
-function unescapeXml(safe) {
-  return safe.replace(/&(lt|gt|quot|apos|amp);/g, function (c) {
-    switch (c) {
-      case '&lt;':   return '<';
-      case '&gt;':   return '>';
-      case '&amp;':  return '&';
-      case '&apos;': return '\'';
-      case '&quot;': return '"';
-    }
-  })
+function createDOM() {
+  var dom = new ActiveXObject('Msxml2.DOMDocument.6.0')
+  dom.async = false
+  dom.validateOnParse = false
+  dom.resolveExternals = false
+  return dom
+}
+
+// Usage: createElement('book', 'Title') => <book>Title</book>
+//        createElement('book', [createElement('author', 'Paul')]) => <book><author>Paul</author></book>
+function createElement(tagName, value) {
+  if (!this.__DOM__)
+    this.__DOM__ = createDOM()
+  var element = this.__DOM__.createElement(tagName)
+  if (value != undefined && typeof value !== 'object')
+    element.text = ''+value
+  if (value != undefined && value.constructor == Array)
+    appendChildren(element, value)
+  return element
+}
+
+// Usage: createElements({ element: 'Value' }) => [ <element>Value</element> ]
+function createElements(description) {
+  var elements = []
+  for (var key in description) {
+    var value = description[key]
+    var element = createElement(key, value)
+    elements.push(element)
+  }
+  return elements
+}
+
+// Usage: appendChildren(domNode, [ childNode1, childNode2, ... ])
+function appendChildren(element, children) {
+  children.forEach(function(child){ element.appendChild(child) })
+  return element
+}
+
+// Usage: extractNodes(domNode, ['//values/*', '//method']) => [ domNode1, domNode2, ... ]
+function extractNodes(dom, selectors) {
+  return dom == undefined ?
+      []
+    : selectors
+        .map(function(s) { return dom.selectNodes(s) })
+        .map(Array.from)
+        .flatten()
+}
+
+// As above, but clones
+function cloneNodes(dom, selectors) {
+  return extractNodes(dom, selectors).map(function(e){ return e.cloneNode(true) })
+}
+
+function extractNode(dom, selector) {
+  return dom.selectSingleNode(selector)
+}
+
+function extractNodeValue(dom, selector) {
+  var node = dom.selectSingleNode(selector)
+  if (node) {
+    return node.text
+  } else {
+    return undefined
+  }
+}
+
+// Usage: addAttribute(createElement('book'), 'count', 5) => <book count="5" />
+function addAttribute(element, name, value) {
+  if (!this.__DOM__)
+    this.__DOM__ = createDOM()
+  var attribute = this.__DOM__.createAttribute(name);
+  attribute.value = value
+  element.setAttributeNode(attribute);
+  return element
 }
 
 
@@ -304,7 +297,7 @@ function btoa(binary) {
   return element.text
 }
 
-// decodes & writes base64 encoded text to file
+// decodes base64 & writes result to file
 function writeDecodedBase64(text, to) {
   var xml = new ActiveXObject("MSXml2.DOMDocument")
   var element = xml.createElement("Base64Data")
@@ -601,6 +594,7 @@ function interpolate(query, record) {
 }
 
 
+
 /*
  * String
  */
@@ -608,39 +602,48 @@ function interpolate(query, record) {
 
 function rightpad(str, len, ch) {
   str = str.toString()
-
-  if (!ch && ch !== 0)
-    ch = ' ';
-
-  while (str.length < len) {
-    str = str + ch
-  }
-
-  if (str.length > len)
-    str = str.slice(0, len)
-
-  return str;
+  ch = (!ch && ch !== 0) ? ' ' : ch
+  while (str.length < len)
+    str = str + ch;
+  return (str.length > len) ? str.slice(0, len) : str
 }
 
 function leftpad(str, len, ch) {
   str = str.toString()
-
-  if (!ch && ch !== 0)
-    ch = ' ';
-
-  while (str.length < len) {
-    str = ch + str
-  }
-
-  if (str.length > len)
-    str = str.slice(0, len)
-
-  return str;
+  ch = (!ch && ch !== 0) ? ' ' : ch
+  while (str.length < len)
+    str = ch + str;
+  return (str.length > len) ? str.slice(0, len) : str
 }
 
 function trim(string) {
   return string.replace(/^\s+|\s+$/g, '')
 }
+
+function escapeXml(unsafe) {
+  return unsafe.replace(/[<>&'"]/g, function (c) {
+    switch (c) {
+      case '<':  return '&lt;';
+      case '>':  return '&gt;';
+      case '&':  return '&amp;';
+      case '\'': return '&apos;';
+      case '"':  return '&quot;';
+    }
+  });
+}
+
+function unescapeXml(safe) {
+  return safe.replace(/&(lt|gt|quot|apos|amp);/g, function (c) {
+    switch (c) {
+      case '&lt;':   return '<';
+      case '&gt;':   return '>';
+      case '&amp;':  return '&';
+      case '&apos;': return '\'';
+      case '&quot;': return '"';
+    }
+  })
+}
+
 
 
 /*
@@ -656,7 +659,6 @@ function execCommand(cmd, cwd) {
   var shell = new ActiveXObject('WScript.Shell')
   if (cwd)
     shell.currentDirectory = cwd
-  log(shell.currentDirectory)
   var handle = shell.exec(cmd)
   return handle.stdOut.readAll()
 }
@@ -665,6 +667,7 @@ function sleep(seconds) {
   new ActiveXObject('WScript.Shell')
     .run('%COMSPEC% /c ping -n ' + (seconds + 1) + ' 127.0.0.1>nul', 0, true)
 }
+
 
 
 /*
@@ -729,6 +732,73 @@ function readExcelAsJS(path, sheetNumber) {
 }
 
 
+
+/*
+ * Binary
+ */
+
+function binaryToString(binary) {
+  var rs = new ActiveXObject("ADODB.Recordset");
+  rs.fields.append("mBinary", 201, 1024, 0x80); // adLongVarChar
+  rs.open();
+  rs.addNew();
+  rs("mBinary").appendChunk(binary);
+  rs.update();
+  return rs("mBinary").value;
+}
+
+function stringToBinary(text, charSet) {
+  var stream = new ActiveXObject('ADODB.Stream')
+  stream.type = 2 // adTypeText
+  stream.charSet = charSet || 'us-ascii'
+  stream.open()
+  stream.writeText(text)
+  stream.position = 0
+  stream.type = 1 // adTypeBinary
+  stream.position = 0
+  return stream.read()
+}
+
+
+
+/*
+ * Object
+ */
+
+function assign(target) {
+  var args = Array.prototype.slice.call(arguments, 1)
+  for (var i = 0; i < args.length; i++) {
+    var source = args[i]
+    for (var key in source) {
+      target[key] = source[key]
+    }
+  }
+  return target
+}
+
+function keys(object) {
+  var keys = []
+  for (var key in object)
+    keys.push(key)
+  return keys
+}
+
+function values(object) {
+  var values = []
+  for (var key in object)
+    values.push(object[key])
+  return values
+}
+
+function entries(object) {
+  var entries = []
+  for (var key in object)
+    entries.push([key, object[key]])
+  return entries
+}
+
+
+
 /*
  * Functional
  */
@@ -746,9 +816,33 @@ function not(fn) {
  * Logging (in cscript.exe mode)
  */
 
+// Usage: debug(value)
+function debug(msg, indent) {
+  indent = indent || '';
+  if (typeof msg == 'number'
+    || typeof msg == 'boolean'
+    || typeof msg == 'string'
+    || msg === undefined
+    || msg === null )  return log(fmt(msg))
+
+  if (msg.constructor == Array) {
+    log(fmt(msg))
+  } else {
+    for (var i in msg) {
+      if (typeof msg[i] == 'object' && msg != null) {
+        log(indent + i + ':');
+        debug(msg[i], indent + '  ')
+      } else {
+        log(indent + i + ':' + fmt(msg[i]))
+      }
+    }
+  }
+}
+
 function escapeChars(value) {
   return value.replace(/\n|\t|\r/g, function(c){ return { '\r': '\\r', '\n': '\\n', '\t': '\\t' }[c] })
 }
+
 function fmt(msg, indent) {
   indent = indent || '';
   var c = function (n) { return function (s) { return '\x1b[' + n + 'm' + s + '\x1b[0m' } }
@@ -774,27 +868,5 @@ function fmt(msg, indent) {
     res = res.substring(0, res.length - 2)
     res += grey(' }')
     return res
-  }
-}
-
-function debug(msg, indent) {
-  indent = indent || '';
-  if (typeof msg == 'number'
-    || typeof msg == 'boolean'
-    || typeof msg == 'string'
-    || msg === undefined
-    || msg === null )  return log(fmt(msg))
-
-  if (msg.constructor == Array) {
-    log(fmt(msg))
-  } else {
-    for (var i in msg) {
-      if (typeof msg[i] == 'object' && msg != null) {
-        log(indent + i + ':');
-        debug(msg[i], indent + '  ')
-      } else {
-        log(indent + i + ':' + fmt(msg[i]))
-      }
-    }
   }
 }
