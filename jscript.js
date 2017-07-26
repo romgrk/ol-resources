@@ -667,6 +667,67 @@ function sleep(seconds) {
 }
 
 
+/*
+ * Excel
+ */
+
+// Read all rows an returns an array of arrays
+function readExcelAsRows(path, sheetNumber) {
+  var xls = new ActiveXObject('Excel.Application');
+  xls.workbooks.open(path);
+
+  var sheet = xls.sheets.item(sheetNumber || 1)
+
+  var row = 1;
+  var rows = [];
+  var length;
+  while (true) {
+    var col = 1;
+
+    if (sheet.cells(row,1).value == undefined)
+      break;
+
+    var currentRow = [];
+    while (length != undefined ? col <= length : true) {
+      var currentValue = sheet.cells(row,col).value;
+      if (length == undefined && currentValue == undefined)
+        break;
+
+      currentRow.push(currentValue)
+      col++;
+    }
+
+    if (length == undefined)
+      length = currentRow.length
+
+    rows.push(currentRow)
+    row++;
+  }
+
+  return rows
+}
+
+// Read all rows and return an array of objects. Assumes first row is column
+// names
+function readExcelAsJS(path, sheetNumber) {
+  var rows = readExcelAsRows(path, sheetNumber)
+
+  var keys = rows[0]
+  var records = []
+  for (var i = 1; i < rows.length; i++) {
+    var row = rows[i]
+    var object = {}
+    for (var j = 0; j < row.length; j++) {
+      var key = keys[j]
+      var value = row[j]
+      object[key] = value
+    }
+    records.push(object)
+  }
+
+  return records
+}
+
 
 /*
  * Functional
