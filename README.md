@@ -8,7 +8,26 @@ This repository is a compilation of scripts and resources for OL related stuff.
      Annotations widgets directly form the browser.
  - [cotg.extension.js][3] contains the above, plus a number of useful functions
      documented below
+ - [rest.js][4] is a wrapper around the Rest API
+ - [repository.js][5] is a wrapper around the workflow data repository
+ - [examples/users_cotg_ie.js][6] is a script to retrieve the user list from a
+     COTG repository as JSON
 
+## rest.js
+
+Usage:
+```js
+var api = new RestAPI(
+  'user',                 /* required */
+  'password',             /* required */
+  'http://localhost:9340' /* optionnal */
+)
+var version = api.files.serviceVersion()
+```
+
+Advanced examples can be found here:
+ - [examples/rest_workflow.js](https://github.com/romgrk/ol-resources/blob/master/examples/rest_workflow.js)
+ - [examples/rest_browser.js](https://github.com/romgrk/ol-resources/blob/master/examples/rest_browser.js)
 
 ## cotg.extension.js
 
@@ -127,4 +146,7 @@ done.
 [1]: https://github.com/romgrk/ol-resources/blob/master/jscript.js
 [2]: https://github.com/romgrk/ol-resources/blob/master/dist/cotg.polyfill.js
 [3]: https://github.com/romgrk/ol-resources/blob/master/dist/cotg.extension.js
+[4]: https://github.com/romgrk/ol-resources/blob/master/rest.js
+[5]: https://github.com/romgrk/ol-resources/blob/master/repository.js
+[6]: https://github.com/romgrk/ol-resources/blob/master/examples/users_cotg_ie.js
 
