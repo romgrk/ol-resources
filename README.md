@@ -4,6 +4,8 @@
 This repository is a compilation of scripts and resources for OL related stuff.
 
  - [jscript.js][1] is a stdlib for the workflow (list of functions below)
+ - [array.js][7] is a polyfill for Array#methods in the workflow, and
+     [working-with-arrays][8] explains why you would use a such thing
  - [cotg.polyfill.js][2] allows you to test COTG's Photo, Signature and
      Annotations widgets directly form the browser.
  - [cotg.extension.js][3] contains the above, plus a number of useful functions
@@ -22,12 +24,22 @@ var api = new RestAPI(
   'password',             /* required */
   'http://localhost:9340' /* optionnal */
 )
+```
+The API is synchronous in the workflow:
+```js
 var version = api.files.serviceVersion()
+```
+And is Promised based in the browser:
+```js
+api.files.serviceVersion()
+  .then(function(version) { /* ... */ })
 ```
 
 Advanced examples can be found here:
  - [examples/rest_workflow.js](https://github.com/romgrk/ol-resources/blob/master/examples/rest_workflow.js)
  - [examples/rest_browser.js](https://github.com/romgrk/ol-resources/blob/master/examples/rest_browser.js)
+
+[Live demo here](http://jsfiddle.net/romgrk/94rLnfez/)
 
 ## cotg.extension.js
 
@@ -149,4 +161,6 @@ done.
 [4]: https://github.com/romgrk/ol-resources/blob/master/rest.js
 [5]: https://github.com/romgrk/ol-resources/blob/master/repository.js
 [6]: https://github.com/romgrk/ol-resources/blob/master/examples/users_cotg_ie.js
+[7]: https://github.com/romgrk/ol-resources/blob/master/array.js
+[8]: https://github.com/romgrk/ol-resources/blob/master/working-with-arrays.md
 
