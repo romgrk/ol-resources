@@ -3,17 +3,25 @@
 
 This repository is a compilation of scripts and resources for OL related stuff.
 
+Workflow:
  - [jscript.js][1] is a stdlib for the workflow (list of functions below)
  - [array.js][7] is a polyfill for Array#methods in the workflow, and
      [working-with-arrays][8] explains why you would use a such thing
- - [cotg.polyfill.js][2] allows you to test COTG's Photo, Signature and
-     Annotations widgets directly form the browser.
- - [cotg.extension.js][3] contains the above, plus a number of useful functions
-     documented below
  - [rest.js][4] is a wrapper around the Rest API
  - [repository.js][5] is a wrapper around the workflow data repository
  - [examples/users_cotg_ie.js][6] is a script to retrieve the user list from a
      COTG repository as JSON
+
+COTG:
+ - [cotg.polyfill.js][2] allows you to test COTG's Photo, Signature and
+     Annotations widgets directly form the browser. It also emulates `savestate`
+     and `restorestate` using localStorage.
+ - [cotg.extension.js][3] contains a number of useful functions documented below
+ - [cotg.onerror.js][9] is a script to display javascript errors as alert in COTG
+ - [cotg.bundle.js][10] contains all of the above in a single file. Drop it in
+     your template and reap the benefits without more effort.
+
+The [examples][11] folder also contains a number of other resources.
 
 ## rest.js
 
@@ -156,11 +164,14 @@ done.
 
 
 [1]: https://github.com/romgrk/ol-resources/blob/master/jscript.js
-[2]: https://github.com/romgrk/ol-resources/blob/master/dist/cotg.polyfill.js
-[3]: https://github.com/romgrk/ol-resources/blob/master/dist/cotg.extension.js
+[2]: https://github.com/romgrk/ol-resources/blob/master/cotg.polyfill.js
+[3]: https://github.com/romgrk/ol-resources/blob/master/cotg.extension.js
 [4]: https://github.com/romgrk/ol-resources/blob/master/rest.js
 [5]: https://github.com/romgrk/ol-resources/blob/master/repository.js
 [6]: https://github.com/romgrk/ol-resources/blob/master/examples/users_cotg_ie.js
 [7]: https://github.com/romgrk/ol-resources/blob/master/array.js
 [8]: https://github.com/romgrk/ol-resources/blob/master/working-with-arrays.md
+[9]: https://github.com/romgrk/ol-resources/blob/master/cotg.onerror.js
+[10]: https://github.com/romgrk/ol-resources/blob/master/dist/cotg.bundle.js
+[11]: https://github.com/romgrk/ol-resources/blob/master/examples
 

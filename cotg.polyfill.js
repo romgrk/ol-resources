@@ -1,5 +1,7 @@
 /*
- * Polyfill for browser
+ * cotg.polyfill.js
+ *
+ * COTG polyfills for browser
  */
 
 const FILE_URI = 0;
@@ -43,7 +45,7 @@ const capturePhoto = (options) => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0)
-        if (options.destinationType == FILE_URI) {
+        if (options.destinationType === FILE_URI) {
           canvas.toBlob(blob => accept(URL.createObjectURL(blob)))
         } else {
           accept(canvas.toDataURL('image/jpeg'));
@@ -54,7 +56,10 @@ const capturePhoto = (options) => {
     navigator.mediaDevices
       .getUserMedia(options || {video: true})
       .then(init)
-      .catch(reject);
+      .catch(() => {
+        document.body.removeChild(container);
+        reject();
+      });
 
     document.body.appendChild(container);
   })
@@ -106,8 +111,8 @@ const capturePath = (options = {}) => {
       if (!ev.touches)
         return ev.offsetX + ',' + ev.offsetY
       const rect = ev.target.getBoundingClientRect()
-      const x = ev.targetTouches[0].pageX - rect.left
-      const y = ev.targetTouches[0].pageY - rect.top
+      const x = ev.targetTouches[0].clientX - rect.left
+      const y = ev.targetTouches[0].clientY - rect.top
       return x + ',' + y
     }
 
@@ -119,7 +124,7 @@ const capturePath = (options = {}) => {
     }
 
     const onMouseMove = ev => {
-      if (ev.buttons & 1) {
+      if (ev.buttons & 1 || ev.type === 'touchmove') {
         data += 'L' + getCoords(ev) + ' ';
         path.setAttribute('d', data);
       }
@@ -153,7 +158,37 @@ const capturePath = (options = {}) => {
   })
 }
 
+const attachStateEvents = () => {
+  window.addEventListener('load', (e) => {
+    const key = location.href;
+    let state = {};
+    for (let n in localStorage) {
+      if (n.indexOf(key) === 0)
+        state[n.replace(key + '.', '')] = localStorage[n];
+    }
+    const restoreEvent = new CustomEvent('restorestate', {
+      detail: { state: state } });
+    window.dispatchEvent(restoreEvent)
+  })
+  window.addEventListener('unload', (e) => {
+    const key = location.href;
+    let state = {};
+    const saveEvent = new CustomEvent('savestate', {
+      detail: { state: state } });
+    window.dispatchEvent(saveEvent)
+    for (let n in state) {
+      if (state.hasOwnProperty(n))
+        localStorage[key + '.' + n] = state[n];
+    }
+  })
+}
+
+/*
+ * Initialization
+ */
+
 if (!window.cordova) {
+
   window.Camera = {
     PictureSourceType: {},
     EncodingType: {},
@@ -189,5 +224,7 @@ if (!window.cordova) {
       </svg>`;
     }
   }
+
+  attachStateEvents();
 }
 
