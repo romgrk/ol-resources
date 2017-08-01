@@ -160,26 +160,21 @@ const capturePath = (options = {}) => {
 
 const attachStateEvents = () => {
   window.addEventListener('load', (e) => {
-    const key = location.href;
-    let state = {};
-    for (let n in localStorage) {
-      if (n.indexOf(key) === 0)
-        state[n.replace(key + '.', '')] = localStorage[n];
-    }
+    const key = location.href
+    const state = JSON.parse(localStorage[key])
     const restoreEvent = new CustomEvent('restorestate', {
-      detail: { state: state } });
+      detail: { state: state }
+    })
     window.dispatchEvent(restoreEvent)
   })
   window.addEventListener('unload', (e) => {
-    const key = location.href;
-    let state = {};
+    const key = location.href
+    const state = {}
     const saveEvent = new CustomEvent('savestate', {
-      detail: { state: state } });
+      detail: { state: state }
+    })
     window.dispatchEvent(saveEvent)
-    for (let n in state) {
-      if (state.hasOwnProperty(n))
-        localStorage[key + '.' + n] = state[n];
-    }
+    localStorage[key] = JSON.stringify(state)
   })
 }
 
