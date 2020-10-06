@@ -21,6 +21,10 @@ COTG:
  - [cotg.bundle.js][10] contains all of the above in a single file. Drop it in
      your template and reap the benefits without more effort.
 
+OL-template files
+ - [generate-ol-template](https://github.com/romgrk/generate-ol-template) contains
+     a script to turn an HTML file into a OL-template file.
+
 The [examples][11] folder also contains a number of other resources.
 
 ## rest.js
